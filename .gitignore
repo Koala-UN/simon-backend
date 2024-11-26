@@ -1,0 +1,14 @@
+# Dependencias de Node.js
+node_modules/
+
+# Archivos de entorno
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+
+# Archivos temporales
+*.tmp
