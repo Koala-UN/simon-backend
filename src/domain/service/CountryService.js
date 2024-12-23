@@ -1,9 +1,9 @@
-const Country = require('../../models/country');
-const pool = require('../../database/database');
+const Country = require('../models/CountryModel');
+const CountryRepository = require('../../infrastructure/repositories/CountryRepository');
 
 class CountryService {
     async getAllCountries() {
-        const [rows] = await pool.query('SELECT * FROM pais');
+        const rows = await CountryRepository.findAll();
         return rows.map(row => Country.fromDB(row));
     }
 
@@ -11,10 +11,7 @@ class CountryService {
         const country = new Country(countryData);
         country.validate();
 
-        const [result] = await pool.query(
-            'INSERT INTO pais (nombre) VALUES (?)',
-            [country.nombre]
-        );
+        const result = await CountryRepository.create(country);
 
         return Country.fromDB({ id: result.insertId, ...countryData });
     }
