@@ -19,7 +19,7 @@ Este proyecto utiliza las siguientes dependencias:
 1. Clona el repositorio, navega a la carpeta del proyecto, instala las dependencias necesarias y configura las variables de entorno:
    ```bash
    git clone https://github.com/Koala-UN/simon-backend.git
-   cd Laboratoriobd
+   cd simon-backend
    - npm install
    - npm install <dependencias a instalar>
 
@@ -30,3 +30,4 @@ Este proyecto utiliza las siguientes dependencias:
    - Repositorios (Repositories): Manejan la persistencia de datos.
    - Controladores (Controllers): Manejan las solicitudes HTTP y las respuestas.
    - Middleware (Middleware): Gestionan la lógica intermedia de las solicitudes, como el manejo de errores.
+   - Interfaces (Interfaces): Definen contratos que aseguran que las implementaciones cumplan con ciertos métodos y propiedades.
