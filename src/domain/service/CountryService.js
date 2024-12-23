@@ -1,7 +1,7 @@
 const Country = require('../models/CountryModel');
 const CountryRepository = require('../../infrastructure/repositories/CountryRepository');
-
-class CountryService {
+const CountryServiceInterface = require('../interfaces/country/ServiceInterface');
+class CountryService extends CountryServiceInterface{
     async getAllCountries() {
         const rows = await CountryRepository.findAll();
         return rows.map(row => Country.fromDB(row));

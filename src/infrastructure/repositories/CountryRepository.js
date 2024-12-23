@@ -1,6 +1,6 @@
 const pool = require('../../database/database');
-
-class CountryRepository {
+const CountryRepoInterface = require('../../domain/interfaces/country/RepositoryInterface')
+class CountryRepository extends CountryRepoInterface{
     async findAll() {
         const [rows] = await pool.query('SELECT * FROM pais');
         return rows;
