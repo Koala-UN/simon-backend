@@ -1,11 +1,10 @@
-// src/domain/repositories/CountryRepository.js
 
-class CountryRepoInterface {
-    async findAll() {
+const RepositoryInterface = require('../RepositoryInterface');  
+class CountryRepoInterface extends RepositoryInterface {
+    async create(country) {
         throw new Error('Method not implemented');
     }
-
-    async create(country) {
+    async findAll() {
         throw new Error('Method not implemented');
     }
 }
