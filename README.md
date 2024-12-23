@@ -22,3 +22,34 @@ Este proyecto utiliza las siguientes dependencias:
    cd Laboratoriobd
    - npm install
    - npm install <dependencias a instalar>
+
+## **Separación de Responsabilidades**:
+
+   - Modelos (Models): Representan las entidades del dominio.
+   - Servicios (Services): Contienen la lógica de negocio.
+   - Repositorios (Repositories): Manejan la persistencia de datos.
+   - Controladores (Controllers): Manejan las solicitudes HTTP y las respuestas.
+   - Middleware (Middleware): Gestionan la lógica intermedia de las solicitudes, como el manejo de errores.
+
+## **Ejemplo de estructura**
+
+project-root/
+├── src/
+│   ├── domain/
+│   │   ├── services/
+│   │   │   └── CountryService.js
+│   │   └── exceptions/
+│   │       ├── AppError.js
+│   │       └── NotFoundError.js
+│   ├── infrastructure/
+│   │   ├── controllers/
+│   │   │   └── CountryController.js
+│   │   ├── routes/
+│   │   │   ├── CountryRoutes.js
+│   │   │   └── routes.js
+│   │   └── middleware/
+│   │       └── errorHandler.js
+│   └── app.js
+├── .env
+├── package.json
+└── README.md
