@@ -5,7 +5,7 @@
 
 const express = require("express");
 const router = express.Router();
-const PedidoController = require("../controllers/OrderController");
+const OrderController = require("../controllers/OrderController");
 
 /**
  * Ruta para obtener todos los pedidos.
@@ -16,7 +16,7 @@ const PedidoController = require("../controllers/OrderController");
  * @param {Request} req - Objeto de solicitud de Express.
  * @param {Response} res - Objeto de respuesta de Express.
  */
-router.get("/", PedidoController.getAllOrders);
+router.get("/", OrderController.getAllOrders);
 
 /**
  * Ruta para actualizar el estado de un pedido.
@@ -28,7 +28,7 @@ router.get("/", PedidoController.getAllOrders);
  * @param {Response} res - Objeto de respuesta de Express.
  * @param {string} req.params.id - ID del pedido a actualizar.
  */
-router.patch("/:id", PedidoController.updateOrderStatus);
+router.patch("/:id", OrderController.updateOrderStatus);
 
 /**
  * Ruta para crear un nuevo pedido.
@@ -39,11 +39,33 @@ router.patch("/:id", PedidoController.updateOrderStatus);
  * @param {Request} req - Objeto de solicitud de Express.
  * @param {Response} res - Objeto de respuesta de Express.
  */
-router.post("/", PedidoController.createOrder);
+router.post("/", OrderController.createOrder);
 
+/**
+* Ruta para actualizar el estado de un platillo en un pedido.
+* @name put/:pedidoId/platillo/:platilloId
+* @function
+* @memberof module:routes/OrderRoutes
+* @inner
+* @param {Request} req - Objeto de solicitud de Express.
+* @param {Response} res - Objeto de respuesta de Express.
+* @param {string} req.params.pedidoId - ID del pedido.
+* @param {string} req.params.platilloId - ID del platillo a actualizar.
+*/
 router.put(
   "/:pedidoId/platillo/:platilloId",
-  PedidoController.updatePlatilloStatus
+  OrderController.updatePlatilloStatus
 );
-
+ /**
+ * Ruta para obtener todos los platillos asociados a un pedido específico.
+ * @name get/:id
+ * @function
+ * @memberof module:routes/OrderRoutes
+ * @inner
+ * @param {Request} req - Objeto de solicitud de Express.
+ * @param {Response} res - Objeto de respuesta de Express.
+ * @param {string} req.params.id - ID del pedido.
+ */
+// Nueva ruta para obtener todos los platillos asociados a un pedido específico
+router.get("/:id", OrderController.getOrder);
 module.exports = router;

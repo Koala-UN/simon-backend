@@ -24,6 +24,28 @@ class OrderController {
     }
   }
   /**
+   * Obtiene todos los platillos asociados a un pedido específico.
+   * @param {Object} req - El objeto de solicitud.
+   * @param {Object} res - El objeto de respuesta.
+   * @param {Function} next - La función de middleware siguiente.
+   * @returns {Promise<void>} - Una promesa que se resuelve cuando los platillos son recuperados y enviados en la respuesta.
+   * @throws {AppError} - Lanza un error si no se pueden recuperar los platillos.
+   */
+  async getOrder(req, res, next) {
+    try {
+      const { id } = req.params;
+      const orderDetails = await OrderService.getOrder(id);
+      res.json(orderDetails);
+    } catch (error) {
+      next(
+        new AppError(
+          `Failed to retrieve order with ID ${id}: ${error.message}`,
+          500
+        )
+      );
+    }
+  }
+  /**
    * Controlador para actualizar el estado de un platillo en un pedido.
    * @param {Object} req - Objeto de solicitud HTTP.
    * @param {Object} res - Objeto de respuesta HTTP.

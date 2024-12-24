@@ -35,7 +35,21 @@ class OrderRepository extends OrderRepositoryInterface {
         `);
     return rows;
   }
-
+  /**
+   * Busca todos los platillos asociados a un pedido específico.
+   * @param {number} pedidoId - ID del pedido.
+   * @returns {Promise<Object[]>} - Lista de platillos asociados al pedido.
+   */
+  async findOrderById(pedidoId) {
+    const [rows] = await pool.query(
+      `SELECT pp.platillo_id, p.nombre, pp.cantidad, pp.estado, pp.total
+     FROM platillo_has_pedido pp
+     JOIN platillo p ON pp.platillo_id = p.id
+     WHERE pp.pedido_id = ?`,
+      [pedidoId]
+    );
+    return rows || []; // Siempre devuelve un array
+  }
   /**
    * Busca un platillo en un pedido específico.
    * @param {number} pedidoId - ID del pedido.
