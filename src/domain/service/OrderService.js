@@ -43,8 +43,8 @@ class OrderService extends OrderServiceInterface {
    * @returns {Promise<Object>} - Resultado de la operación.
    */
   async updatePlatilloStatus(pedidoId, platilloId, estado) {
-    // Validación de estados permitidos
-    const validStates = ["PENDIENTE", "ENTREGADO"];
+    // Validar el estado recibido usando el enum
+    const validStates = Object.values(state.Pedido);
     if (!validStates.includes(estado)) {
       throw new AppError(
         `Estado inválido. Estados permitidos: ${validStates.join(", ")}.`,

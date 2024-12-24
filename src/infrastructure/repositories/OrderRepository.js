@@ -1,5 +1,6 @@
 const pool = require("../../database/database");
 const OrderRepositoryInterface = require("../../domain/interfaces/order/RepositoryInterface");
+const state = require("../../utils/state");
 /**
  * Clase que interactúa con la base de datos para las operaciones de pedidos.
  */
@@ -157,7 +158,7 @@ class OrderRepository extends OrderRepositoryInterface {
         const precioUnitario = precioRow.precio;
         const total = cantidad * precioUnitario;
 
-        return [platilloId, pedidoId, cantidad, "PENDIENTE", total];
+        return [platilloId, pedidoId, cantidad, state.Pedido.PENDIENTE, total];
       });
 
       await connection.query(
@@ -167,7 +168,7 @@ class OrderRepository extends OrderRepositoryInterface {
 
       await connection.commit();
 
-      return { id: pedidoId, mesaId, estado: "PENDIENTE" };
+      return { id: pedidoId, mesaId, estado: state.Pedido.PENDIENTE };
     } catch (error) {
       await connection.rollback();
       throw new AppError(`Error al crear el pedido: ${error.message}`, 500);
