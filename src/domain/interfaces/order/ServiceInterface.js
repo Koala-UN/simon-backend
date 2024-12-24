@@ -21,5 +21,9 @@ class OrderServiceInterface{
     async getOrders(){
         throw new Error('ERR_METHOD_NOT_IMPLEMENTED');
     }
+
+    async createOrder(orderData, platillos){
+        throw new Error('ERR_METHOD_NOT_IMPLEMENTED')
+    }
 }
 module.exports = OrderServiceInterface;
