@@ -2,6 +2,9 @@ class OrderServiceInterface{
     async createOrder(order){
         throw new Error('ERR_METHOD_NOT_IMPLEMENTED');
     }
+    async updateOrderStatus(orderId, status){
+        throw new Error('ERR_METHOD_NOT_IMPLEMENTED')
+    }
 
     async updateOrder(order){
         throw new Error('ERR_METHOD_NOT_IMPLEMENTED');
