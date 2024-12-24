@@ -21,6 +21,20 @@ class OrderService extends OrderServiceInterface {
     }
     return rows.map((row) => Order.fromDB(row));
   }
+
+ /**
+   * Obtiene todos los platillos asociados a un pedido específico.
+   * @param {number} id - ID del pedido.
+   * @returns {Promise<Object[]>} - Lista de platillos asociados al pedido.
+   */
+  async getOrder(id) {
+    try {
+      const orderDetails = await OrderRepository.findOrderById(id);
+      return orderDetails;
+    } catch (error) {
+      throw new AppError(`Error al obtener el pedido con ID ${id}: ${error.message}`)
+    }
+  }
   /**
    * Actualiza el estado de un platillo en un pedido.
    * @param {number} pedidoId - ID del pedido.
@@ -29,8 +43,8 @@ class OrderService extends OrderServiceInterface {
    * @returns {Promise<Object>} - Resultado de la operación.
    */
   async updatePlatilloStatus(pedidoId, platilloId, estado) {
-    // Validación de estados permitidos
-    const validStates = ["PENDIENTE", "ENTREGADO"];
+    // Validar el estado recibido usando el enum
+    const validStates = Object.values(state.Pedido);
     if (!validStates.includes(estado)) {
       throw new AppError(
         `Estado inválido. Estados permitidos: ${validStates.join(", ")}.`,

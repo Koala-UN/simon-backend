@@ -18,7 +18,7 @@ class OrderServiceInterface{
         throw new Error('ERR_METHOD_NOT_IMPLEMENTED');
     }
 
-    async getOrders(){
+    async getOrder(id){
         throw new Error('ERR_METHOD_NOT_IMPLEMENTED');
     }
 

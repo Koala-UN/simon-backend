@@ -1,5 +1,6 @@
 const pool = require("../../database/database");
 const OrderRepositoryInterface = require("../../domain/interfaces/order/RepositoryInterface");
+const state = require("../../utils/state");
 /**
  * Clase que interactúa con la base de datos para las operaciones de pedidos.
  */
@@ -35,7 +36,21 @@ class OrderRepository extends OrderRepositoryInterface {
         `);
     return rows;
   }
-
+  /**
+   * Busca todos los platillos asociados a un pedido específico.
+   * @param {number} pedidoId - ID del pedido.
+   * @returns {Promise<Object[]>} - Lista de platillos asociados al pedido.
+   */
+  async findOrderById(pedidoId) {
+    const [rows] = await pool.query(
+      `SELECT pp.platillo_id, p.nombre, pp.cantidad, pp.estado, pp.total
+     FROM platillo_has_pedido pp
+     JOIN platillo p ON pp.platillo_id = p.id
+     WHERE pp.pedido_id = ?`,
+      [pedidoId]
+    );
+    return rows || []; // Siempre devuelve un array
+  }
   /**
    * Busca un platillo en un pedido específico.
    * @param {number} pedidoId - ID del pedido.
@@ -121,10 +136,10 @@ class OrderRepository extends OrderRepositoryInterface {
       );
       const pedidoId = pedidoResult.insertId;
 
-      // Obtener los precios de los platillos
+      // Obtener los precios y existencias de los platillos
       const platilloIds = platillos.map((p) => p.platilloId);
       const [precioRows] = await connection.query(
-        `SELECT id AS platilloId, precio FROM platillo WHERE id IN (?)`,
+        `SELECT id AS platilloId, precio, existencias FROM platillo WHERE id IN (?)`,
         [platilloIds]
       );
 
@@ -135,17 +150,35 @@ class OrderRepository extends OrderRepositoryInterface {
         );
       }
 
-      // Crear los registros en platillo_has_pedido
+      // Verificar existencias y preparar los valores para la inserción
       const platilloValues = platillos.map(({ platilloId, cantidad }) => {
         const precioRow = precioRows.find(
           (row) => row.platilloId === platilloId
         );
         const precioUnitario = precioRow.precio;
+        const existencias = precioRow.existencias;
+
+        if (cantidad > existencias) {
+          throw new AppError(
+            `La cantidad solicitada para el platillo con ID ${platilloId} excede las existencias disponibles.`,
+            400
+          );
+        }
+
         const total = cantidad * precioUnitario;
 
-        return [platilloId, pedidoId, cantidad, "PENDIENTE", total];
+        return [platilloId, pedidoId, cantidad, state.Pedido.PENDIENTE, total];
       });
 
+      // Descontar las existencias de los platillos
+      for (const { platilloId, cantidad } of platillos) {
+        await connection.query(
+          `UPDATE platillo SET existencias = existencias - ? WHERE id = ?`,
+          [cantidad, platilloId]
+        );
+      }
+
+      // Crear los registros en platillo_has_pedido
       await connection.query(
         `INSERT INTO platillo_has_pedido (platillo_id, pedido_id, cantidad, estado, total) VALUES ?`,
         [platilloValues]
@@ -153,7 +186,7 @@ class OrderRepository extends OrderRepositoryInterface {
 
       await connection.commit();
 
-      return { id: pedidoId, mesaId, estado: "PENDIENTE" };
+      return { id: pedidoId, mesaId, estado: state.Pedido.PENDIENTE };
     } catch (error) {
       await connection.rollback();
       throw new AppError(`Error al crear el pedido: ${error.message}`, 500);
