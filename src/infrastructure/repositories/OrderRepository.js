@@ -120,54 +120,70 @@ class OrderRepository extends OrderRepositoryInterface {
    */
   async create(orderData, platillos) {
     const { mesaId } = orderData;
-
+  
     if (!platillos || platillos.length === 0) {
       throw new AppError("El pedido debe contener al menos un platillo.", 400);
     }
-
+  
     const connection = await pool.getConnection();
     try {
       await connection.beginTransaction();
-
+  
       // Crear pedido
       const [pedidoResult] = await connection.query(
         `INSERT INTO pedido (fecha, hora, mesa_id) VALUES (CURRENT_DATE(), CURRENT_TIME(), ?)`,
         [mesaId]
       );
       const pedidoId = pedidoResult.insertId;
-
-      // Obtener los precios de los platillos
+  
+      // Obtener los precios y existencias de los platillos
       const platilloIds = platillos.map((p) => p.platilloId);
       const [precioRows] = await connection.query(
-        `SELECT id AS platilloId, precio FROM platillo WHERE id IN (?)`,
+        `SELECT id AS platilloId, precio, existencias FROM platillo WHERE id IN (?)`,
         [platilloIds]
       );
-
+  
       if (precioRows.length !== platilloIds.length) {
         throw new AppError(
           "Uno o más platillos no existen en la base de datos.",
           404
         );
       }
-
-      // Crear los registros en platillo_has_pedido
+  
+      // Verificar existencias y preparar los valores para la inserción
       const platilloValues = platillos.map(({ platilloId, cantidad }) => {
-        const precioRow = precioRows.find(
-          (row) => row.platilloId === platilloId
-        );
+        const precioRow = precioRows.find((row) => row.platilloId === platilloId);
         const precioUnitario = precioRow.precio;
+        const existencias = precioRow.existencias;
+  
+        if (cantidad > existencias) {
+          throw new AppError(
+            `La cantidad solicitada para el platillo con ID ${platilloId} excede las existencias disponibles.`,
+            400
+          );
+        }
+  
         const total = cantidad * precioUnitario;
-
+  
         return [platilloId, pedidoId, cantidad, state.Pedido.PENDIENTE, total];
       });
-
+  
+      // Descontar las existencias de los platillos
+      for (const { platilloId, cantidad } of platillos) {
+        await connection.query(
+          `UPDATE platillo SET existencias = existencias - ? WHERE id = ?`,
+          [cantidad, platilloId]
+        );
+      }
+  
+      // Crear los registros en platillo_has_pedido
       await connection.query(
         `INSERT INTO platillo_has_pedido (platillo_id, pedido_id, cantidad, estado, total) VALUES ?`,
         [platilloValues]
       );
-
+  
       await connection.commit();
-
+  
       return { id: pedidoId, mesaId, estado: state.Pedido.PENDIENTE };
     } catch (error) {
       await connection.rollback();
