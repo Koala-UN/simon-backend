@@ -15,7 +15,11 @@ class RestaurantService extends RestaurantServiceInterface {
     this._validateRestaurantData(restaurantData);
     this._validateAddressData(addressData);
 
-    return await restaurantRepository.create(restaurantData, addressData, cityId);
+    return await restaurantRepository.create(
+      restaurantData,
+      addressData,
+      cityId
+    );
   }
 
   /**
@@ -52,6 +56,102 @@ class RestaurantService extends RestaurantServiceInterface {
         throw new AppError(`El campo ${field} es obligatorio`, 400);
       }
     });
+  }
+
+  /**
+   * Encuentra un restaurante por su ID.
+   * @param {number} restaurantId - ID del restaurante.
+   * @returns {Promise<Restaurant>} El restaurante encontrado.
+   */
+  async getRestaurantById(restaurantId) {
+    if (!restaurantId) {
+      throw new AppError("El ID del restaurante es requerido", 400);
+    }
+    return await restaurantRepository.findById(restaurantId);
+  }
+
+  /**
+   * Encuentra todos los restaurantes por ciudad.
+   * @param {number} cityId - ID de la ciudad.
+   * @returns {Promise<Array<Restaurant>>} Lista de restaurantes.
+   */
+  async getAllRestaurantsByCity(cityId) {
+    if (!cityId) {
+      throw new AppError("El ID de la ciudad es requerido", 400);
+    }
+    return await restaurantRepository.findAllByCity(cityId);
+  }
+
+  /**
+   * Encuentra todos los restaurantes por departamento.
+   * @param {number} departmentId - ID del departamento.
+   * @returns {Promise<Array<Restaurant>>} Lista de restaurantes.
+   */
+  async getAllRestaurantsByDepartment(departmentId) {
+    if (!departmentId) {
+      throw new AppError("El ID del departamento es requerido", 400);
+    }
+    return await restaurantRepository.findAllByDepartment(departmentId);
+  }
+
+  /**
+   * Encuentra todos los restaurantes por país.
+   * @param {number} countryId - ID del país.
+   * @returns {Promise<Array<Restaurant>>} Lista de restaurantes.
+   */
+  async getAllRestaurantsByCountry(countryId) {
+    if (!countryId) {
+      throw new AppError("El ID del país es requerido", 400);
+    }
+    return await restaurantRepository.findAllByCountry(countryId);
+  }
+
+  /**
+   * Encuentra un restaurante por su ID.
+   * @param {number} restaurantId - ID del restaurante.
+   * @returns {Promise<Restaurant>} El restaurante encontrado.
+   */
+  async getRestaurantById(restaurantId) {
+    if (!restaurantId) {
+      throw new AppError("El ID del restaurante es requerido", 400);
+    }
+    return await restaurantRepository.findById(restaurantId);
+  }
+
+  /**
+   * Encuentra todos los restaurantes por ciudad.
+   * @param {number} cityId - ID de la ciudad.
+   * @returns {Promise<Array<Restaurant>>} Lista de restaurantes.
+   */
+  async getAllRestaurantsByCity(cityId) {
+    if (!cityId) {
+      throw new AppError("El ID de la ciudad es requerido", 400);
+    }
+    return await restaurantRepository.findAllByCity(cityId);
+  }
+
+  /**
+   * Encuentra todos los restaurantes por departamento.
+   * @param {number} departmentId - ID del departamento.
+   * @returns {Promise<Array<Restaurant>>} Lista de restaurantes.
+   */
+  async getAllRestaurantsByDepartment(departmentId) {
+    if (!departmentId) {
+      throw new AppError("El ID del departamento es requerido", 400);
+    }
+    return await restaurantRepository.findAllByDepartment(departmentId);
+  }
+
+  /**
+   * Encuentra todos los restaurantes por país.
+   * @param {number} countryId - ID del país.
+   * @returns {Promise<Array<Restaurant>>} Lista de restaurantes.
+   */
+  async getAllRestaurantsByCountry(countryId) {
+    if (!countryId) {
+      throw new AppError("El ID del país es requerido", 400);
+    }
+    return await restaurantRepository.findAllByCountry(countryId);
   }
 }
 
