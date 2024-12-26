@@ -1,4 +1,4 @@
-const pool = require("../../database/database");
+const pool = require("../../database/connection");
 const OrderRepositoryInterface = require("../../domain/interfaces/order/RepositoryInterface");
 const state = require("../../utils/state");
 /**
