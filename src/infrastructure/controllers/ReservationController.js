@@ -39,6 +39,20 @@ class ReservationController {
       message: "Mesa asignada correctamente",
     });
   });
+
+  /**
+   * Maneja la solicitud POST /reservas/:reservationId/cancelar.
+   * @param {Object} req - Objeto de solicitud.
+   * @param {Object} res - Objeto de respuesta.
+   */
+  cancelReservation = asyncHandler(async (req, res) => {
+    const { reservationId } = req.params;
+    await reservationService.cancelReservation(reservationId);
+    res.status(200).json({
+      status: "success",
+      message: "Reserva cancelada correctamente",
+    });
+  });
 }
 
 module.exports = new ReservationController();

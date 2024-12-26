@@ -92,6 +92,40 @@ class ReservationService extends ReservationServiceInterface {
       throw new AppError(`Error al asignar la mesa: ${error.message}`, 500);
     }
   }
+
+  /**
+   * Cancela una reserva.
+   * @param {number} reservationId - ID de la reserva.
+   * @returns {Promise<void>}
+   */
+  async cancelReservation(reservationId) {
+    try {
+      const reservation = await reservationRepository.findById(reservationId);
+      if (!reservation) {
+        throw new NotFoundError(
+          `Reserva con ID ${reservationId} no encontrada`
+        );
+      }
+
+      if (reservation.estado === state.Reservas.CANCELADO) {
+        throw new AppError(
+          `La reserva con ID ${reservationId} ya está cancelada`,
+          400
+        );
+      }
+
+      await reservationRepository.cancelReservation(
+        reservationId,
+        reservation.cantidad,
+        reservation.restauranteId
+      );
+    } catch (error) {
+      if (error instanceof NotFoundError || error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError(`Error al cancelar la reserva: ${error.message}`, 500);
+    }
+  }
 }
 
 module.exports = new ReservationService();

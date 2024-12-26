@@ -10,7 +10,15 @@ class ReservationRepositoryInterface extends RepositoryInterface{
     findAll(){
         throw new Error('ERR_METHOD_NOT_IMPLEMENTED');
     }
+
     async assignTable(reservationId, tableId){
+        throw new Error('ERR_METHOD_NOT_IMPLEMENTED');
+    }
+
+    async updateState(reservationId, newState){
+        throw new Error('ERR_METHOD_NOT_IMPLEMENTED');
+    }
+    async cancelReservation(reservationId){
         throw new Error('ERR_METHOD_NOT_IMPLEMENTED');
     }
 }

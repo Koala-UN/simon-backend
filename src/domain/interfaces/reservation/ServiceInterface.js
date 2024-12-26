@@ -31,7 +31,9 @@ class ReservationServiceInterface extends ServiceInterface
     async assignTable(reservationId, tableId){
         throw new Error('ERR_METHOD_NOT_IMPLEMENTED');
     }
-
+    async cancelReservation(reservationId){
+        throw new Error('ERR_METHOD_NOT_IMPLEMENTED');
+    }
 
 }
 module.exports = ReservationServiceInterface;
