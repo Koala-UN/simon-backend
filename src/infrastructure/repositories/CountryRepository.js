@@ -1,4 +1,4 @@
-const pool = require('../../database/database');
+const pool = require('../../database/connection');
 const CountryRepoInterface = require('../../domain/interfaces/country/RepositoryInterface')
 class CountryRepository extends CountryRepoInterface{
     async findAll() {
