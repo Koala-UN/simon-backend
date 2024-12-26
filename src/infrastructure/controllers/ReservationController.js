@@ -1,5 +1,6 @@
 const reservationService = require("../../domain/service/ReservationService");
 const asyncHandler = require("../middleware/asyncHandler");
+const AppError = require("../../domain/exception/AppError");
 class ReservationController {
   /**
    * Maneja la solicitud GET /reservas.
@@ -51,6 +52,23 @@ class ReservationController {
     res.status(200).json({
       status: "success",
       message: "Reserva cancelada correctamente",
+    });
+  });
+
+  /**
+   * Maneja la solicitud GET /reservas/restaurante/:restauranteId.
+   * @param {Object} req - Objeto de solicitud.
+   * @param {Object} res - Objeto de respuesta.
+   */
+  getAllReservationsByRestaurant = asyncHandler(async (req, res) => {
+    const { restauranteId } = req.params;
+    if (!restauranteId) {
+      throw new AppError('El ID del restaurante es requerido', 400);
+    }
+    const reservations = await reservationService.getAllByRestaurant(restauranteId);
+    res.status(200).json({
+      status: "success",
+      data: reservations,
     });
   });
 }

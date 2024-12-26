@@ -126,6 +126,15 @@ class ReservationService extends ReservationServiceInterface {
       throw new AppError(`Error al cancelar la reserva: ${error.message}`, 500);
     }
   }
+
+  /**
+   * Lista todas las reservas por restaurante.
+   * @param {number} restauranteId - ID del restaurante.
+   * @returns {Promise<Array>} Lista de reservas.
+   */
+  async getAllByRestaurant(restauranteId) {
+    return await reservationRepository.findAllByRestaurant(restauranteId);
+  }
 }
 
 module.exports = new ReservationService();
