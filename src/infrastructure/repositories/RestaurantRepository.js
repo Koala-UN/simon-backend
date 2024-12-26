@@ -68,14 +68,14 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
    */
   async findById(restaurantId) {
     const query = `
-      SELECT r.*, d.*, c.nombre AS ciudad_nombre, dp.nombre AS departamento_nombre, p.nombre AS pais_nombre
-      FROM restaurante r
-      JOIN direccion d ON r.direccion_id = d.id
-      JOIN ciudad c ON d.ciudad_id = c.id
-      JOIN departamento dp ON c.departamento_id = dp.id
-      JOIN pais p ON dp.pais_id = p.id
-      WHERE r.id = ?
-    `;
+          SELECT r.*, d.*, c.id AS ciudad_id, c.nombre AS ciudad_nombre, dp.id AS departamento_id, dp.nombre AS departamento_nombre, p.id AS pais_id, p.nombre AS pais_nombre
+          FROM restaurante r
+          JOIN direccion d ON r.direccion_id = d.id
+          JOIN ciudad c ON d.ciudad_id = c.id
+          JOIN departamento dp ON c.departamento_id = dp.id
+          JOIN pais p ON dp.pais_id = p.id
+          WHERE r.id = ?
+        `;
     const [rows] = await db.execute(query, [restaurantId]);
     if (rows.length === 0) {
       throw new AppError(
@@ -106,14 +106,14 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
    */
   async findAllByCity(cityId) {
     const query = `
-      SELECT r.*, d.*, c.nombre AS ciudad_nombre, dp.nombre AS departamento_nombre, p.nombre AS pais_nombre
-      FROM restaurante r
-      JOIN direccion d ON r.direccion_id = d.id
-      JOIN ciudad c ON d.ciudad_id = c.id
-      JOIN departamento dp ON c.departamento_id = dp.id
-      JOIN pais p ON dp.pais_id = p.id
-      WHERE c.id = ?
-    `;
+          SELECT r.*, d.*, c.id AS ciudad_id, c.nombre AS ciudad_nombre, dp.id AS departamento_id, dp.nombre AS departamento_nombre, p.id AS pais_id, p.nombre AS pais_nombre
+          FROM restaurante r
+          JOIN direccion d ON r.direccion_id = d.id
+          JOIN ciudad c ON d.ciudad_id = c.id
+          JOIN departamento dp ON c.departamento_id = dp.id
+          JOIN pais p ON dp.pais_id = p.id
+          WHERE c.id = ?
+        `;
     const [rows] = await db.execute(query, [cityId]);
     return rows.map((row) => {
       const address = Address.fromDB(row);
@@ -139,14 +139,14 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
    */
   async findAllByDepartment(departmentId) {
     const query = `
-      SELECT r.*, d.*, c.nombre AS ciudad_nombre, dp.nombre AS departamento_nombre, p.nombre AS pais_nombre
-      FROM restaurante r
-      JOIN direccion d ON r.direccion_id = d.id
-      JOIN ciudad c ON d.ciudad_id = c.id
-      JOIN departamento dp ON c.departamento_id = dp.id
-      JOIN pais p ON dp.pais_id = p.id
-      WHERE dp.id = ?
-    `;
+          SELECT r.*, d.*, c.id AS ciudad_id, c.nombre AS ciudad_nombre, dp.id AS departamento_id, dp.nombre AS departamento_nombre, p.id AS pais_id, p.nombre AS pais_nombre
+          FROM restaurante r
+          JOIN direccion d ON r.direccion_id = d.id
+          JOIN ciudad c ON d.ciudad_id = c.id
+          JOIN departamento dp ON c.departamento_id = dp.id
+          JOIN pais p ON dp.pais_id = p.id
+          WHERE dp.id = ?
+        `;
     const [rows] = await db.execute(query, [departmentId]);
     return rows.map((row) => {
       const address = Address.fromDB(row);
@@ -172,14 +172,14 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
    */
   async findAllByCountry(countryId) {
     const query = `
-      SELECT r.*, d.*, c.nombre AS ciudad_nombre, dp.nombre AS departamento_nombre, p.nombre AS pais_nombre
-      FROM restaurante r
-      JOIN direccion d ON r.direccion_id = d.id
-      JOIN ciudad c ON d.ciudad_id = c.id
-      JOIN departamento dp ON c.departamento_id = dp.id
-      JOIN pais p ON dp.pais_id = p.id
-      WHERE p.id = ?
-    `;
+          SELECT r.*, d.*, c.id AS ciudad_id, c.nombre AS ciudad_nombre, dp.id AS departamento_id, dp.nombre AS departamento_nombre, p.id AS pais_id, p.nombre AS pais_nombre
+          FROM restaurante r
+          JOIN direccion d ON r.direccion_id = d.id
+          JOIN ciudad c ON d.ciudad_id = c.id
+          JOIN departamento dp ON c.departamento_id = dp.id
+          JOIN pais p ON dp.pais_id = p.id
+          WHERE p.id = ?
+        `;
     const [rows] = await db.execute(query, [countryId]);
     return rows.map((row) => {
       const address = Address.fromDB(row);
