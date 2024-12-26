@@ -137,6 +137,69 @@ class ReservationRepository extends ReservationRepositoryInterface {
       reservationId,
     ]);
   }
+
+  /**
+   * Actualiza el estado de una reserva.
+   * @param {number} reservationId - ID de la reserva.
+   * @param {string} newState - Nuevo estado de la reserva.
+   * @returns {Promise<void>}
+   */
+  async updateState(reservationId, newState) {
+    const query = `UPDATE reservas SET estado = ? WHERE id = ?`;
+    await db.execute(query, [newState, reservationId]);
+  }
+
+  /**
+   * Cancela una reserva.
+   * @param {number} reservationId - ID de la reserva.
+   * @param {number} cantidadReserva - Cantidad de personas en la reserva.
+   * @param {number} restauranteId - ID del restaurante.
+   * @returns {Promise<void>}
+   */
+  async cancelReservation(reservationId, cantidadReserva, restauranteId) {
+    const connection = await db.getConnection();
+    try {
+      await connection.beginTransaction();
+
+      // Eliminar la asignación de mesa
+      await connection.execute(
+        `DELETE FROM mesa_has_reservas WHERE reservas_id = ?`,
+        [reservationId]
+      );
+
+      // Restaurar la capacidad de reservas del restaurante
+      await connection.execute(
+        `UPDATE restaurante SET capacidad_reservas = capacidad_reservas + ? WHERE id = ?`,
+        [cantidadReserva, restauranteId]
+      );
+
+      // Actualizar el estado de la reserva a CANCELADO
+      await connection.execute(`UPDATE reservas SET estado = ? WHERE id = ?`, [
+        state.Reservas.CANCELADO,
+        reservationId,
+      ]);
+
+      await connection.commit();
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
+  }
+  /**
+   * Encuentra una reserva por su ID.
+   * @param {number} reservationId - ID de la reserva.
+   * @returns {Promise<Reservation|null>} La reserva encontrada o null si no existe.
+   */
+  async findById(reservationId) {
+    const query = `SELECT * FROM reservas WHERE id = ?`;
+    const [rows] = await db.execute(query, [reservationId]);
+    if (rows.length === 0) {
+      return null;
+    }
+    return Reservation.fromDB(rows[0]);
+  }
 }
 
 module.exports = new ReservationRepository();
