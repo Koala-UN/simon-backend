@@ -5,5 +5,7 @@ const router = express.Router();
 
 // Rutas de reservas
 router.get('/', reservationController.getAllReservations);
+router.post('/', reservationController.createReservation);
+router.post('/:reservationId/table/:tableId', reservationController.assignTable);
 
 module.exports = router;
