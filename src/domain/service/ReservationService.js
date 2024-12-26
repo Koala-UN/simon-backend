@@ -35,6 +35,47 @@ class ReservationService extends ReservationServiceInterface {
     };
     return stateDescription[estado] || "Estado desconocido.";
   }
+
+  /**
+   * Crea una nueva reserva.
+   * @param {Object} reservationData - Datos de la reserva.
+   * @returns {Promise<Reservation>} La reserva creada.
+   */
+  async createReservation(reservationData) {
+    try {
+      // Validar los datos de la reserva
+      this._validateReservationData(reservationData);
+
+      // Crear la reserva en el repositorio
+      const newReservation = await reservationRepository.create(
+        reservationData
+      );
+      return newReservation.toJSON();
+    } catch (error) {
+      throw new AppError(`Error al crear la reserva: ${error.message}`, 500);
+    }
+  }
+
+  /**
+   * Valida los datos de la reserva.
+   * @param {Object} reservationData - Datos de la reserva.
+   * @throws {AppError} - Si los datos de la reserva no son válidos.
+   */
+  _validateReservationData(reservationData) {
+    const requiredFields = [
+      "fecha",
+      "hora",
+      "cantidad",
+      "restauranteId",
+      "nombre",
+      "correo",
+    ];
+    requiredFields.forEach((field) => {
+      if (!reservationData[field]) {
+        throw new AppError(`El campo ${field} es obligatorio`, 400);
+      }
+    });
+  }
 }
 
 module.exports = new ReservationService();
