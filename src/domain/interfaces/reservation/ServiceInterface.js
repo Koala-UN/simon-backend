@@ -1,32 +1,34 @@
 const ServiceInterface = require("../ServiceInterface");
 
-class OrderServiceInterface extends ServiceInterface{
+class ReservationServiceInterface extends ServiceInterface
+{
     async getAll(){
         throw new Error('ERR_METHOD_NOT_IMPLEMENTED');
     }
-    async createOrder(order){
+    async createReservation(reservation){
         throw new Error('ERR_METHOD_NOT_IMPLEMENTED');
     }
-    async updateOrderStatus(orderId, status){
+
+    async updateReservationStatus(reservationId, status){
         throw new Error('ERR_METHOD_NOT_IMPLEMENTED')
     }
 
-    async updateOrder(order){
+    async updateReservation(reservation){
         throw new Error('ERR_METHOD_NOT_IMPLEMENTED');
     }
 
-    async deleteOrder(order){
+    async deleteReservation(reservation){
         throw new Error('ERR_METHOD_NOT_IMPLEMENTED');
     }
 
-    async getOrderById(orderId){
+    async getReservationById(reservationId){
         throw new Error('ERR_METHOD_NOT_IMPLEMENTED');
     }
 
-    async getOrder(id){
+    async getReservation(id){
         throw new Error('ERR_METHOD_NOT_IMPLEMENTED');
     }
 
 
 }
-module.exports = OrderServiceInterface;
+module.exports = ReservationServiceInterface;
