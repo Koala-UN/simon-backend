@@ -25,6 +25,20 @@ class ReservationController {
       data: newReservation,
     });
   });
+
+  /**
+   * Maneja la solicitud POST /reservas/:reservationId/mesa/:tableId.
+   * @param {Object} req - Objeto de solicitud.
+   * @param {Object} res - Objeto de respuesta.
+   */
+  assignTable = asyncHandler(async (req, res) => {
+    const { reservationId, tableId } = req.params;
+    await reservationService.assignTable(reservationId, tableId);
+    res.status(200).json({
+      status: "success",
+      message: "Mesa asignada correctamente",
+    });
+  });
 }
 
 module.exports = new ReservationController();

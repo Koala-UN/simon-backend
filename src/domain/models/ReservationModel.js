@@ -25,6 +25,7 @@ class Reservation {
     this.telefono = data.telefono || null;
     this.correo = data.correo || null;
     this.cedula = data.cedula || null;
+    this.restauranteId = data.restauranteId || null; // Valor opcional
     this.mesaEtiqueta = data.mesaEtiqueta || null; // Valor opcional
 
     // Validaciones
@@ -69,6 +70,7 @@ class Reservation {
       telefono: data.telefono,
       correo: data.correo,
       cedula: data.cedula,
+      restauranteId: data.restaurante_id, // Agregado opcionalmente
       mesaEtiqueta: data.mesa_etiqueta || null, // Agregado opcionalmente
     });
   }
@@ -88,6 +90,7 @@ class Reservation {
       telefono: this.telefono,
       correo: this.correo,
       cedula: this.cedula,
+      restauranteId: this.restauranteId, // Incluido en el JSON
       mesaEtiqueta: this.mesaEtiqueta, // Incluido en el JSON
     };
   }

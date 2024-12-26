@@ -28,6 +28,9 @@ class ReservationServiceInterface extends ServiceInterface
     async getReservation(id){
         throw new Error('ERR_METHOD_NOT_IMPLEMENTED');
     }
+    async assignTable(reservationId, tableId){
+        throw new Error('ERR_METHOD_NOT_IMPLEMENTED');
+    }
 
 
 }

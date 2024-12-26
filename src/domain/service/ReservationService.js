@@ -2,7 +2,7 @@ const reservationRepository = require("../../infrastructure/repositories/Reserva
 const NotFoundError = require("../exception/NotFoundError");
 const ReservationServiceInterface = require("../interfaces/reservation/ServiceInterface");
 const state = require("../../utils/state"); // Importar el enum de estados
-
+const AppError = require("../exception/AppError");
 class ReservationService extends ReservationServiceInterface {
   /**
    * Lista todas las reservas.
@@ -75,6 +75,22 @@ class ReservationService extends ReservationServiceInterface {
         throw new AppError(`El campo ${field} es obligatorio`, 400);
       }
     });
+  }
+  /**
+   * Asigna una mesa a una reserva.
+   * @param {number} reservationId - ID de la reserva.
+   * @param {number} tableId - ID de la mesa.
+   * @returns {Promise<void>}
+   */
+  async assignTable(reservationId, tableId) {
+    try {
+      await reservationRepository.assignTable(reservationId, tableId);
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        throw new NotFoundError(error.message);
+      }
+      throw new AppError(`Error al asignar la mesa: ${error.message}`, 500);
+    }
   }
 }
 
