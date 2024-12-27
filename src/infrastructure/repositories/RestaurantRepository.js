@@ -197,6 +197,113 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
       });
     });
   }
+
+  /**
+   * Elimina un restaurante por su ID y la dirección asociada.
+   * @param {number} restaurantId - ID del restaurante.
+   * @returns {Promise<void>}
+   */
+  async deleteRestaurant(restaurantId) {
+    const connection = await db.getConnection();
+    try {
+      await connection.beginTransaction();
+
+      // Obtener el ID de la dirección asociada
+      const [rows] = await connection.execute(
+        `SELECT direccion_id FROM restaurante WHERE id = ?`,
+        [restaurantId]
+      );
+      if (rows.length === 0) {
+        throw new Error(`Restaurante con ID ${restaurantId} no encontrado`);
+      }
+      const direccionId = rows[0].direccion_id;
+
+      // Eliminar el restaurante
+      const deleteRestaurantQuery = `DELETE FROM restaurante WHERE id = ?`;
+      await connection.execute(deleteRestaurantQuery, [restaurantId]);
+
+      // Eliminar la dirección
+      const deleteAddressQuery = `DELETE FROM direccion WHERE id = ?`;
+      await connection.execute(deleteAddressQuery, [direccionId]);
+
+      await connection.commit();
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
+  }
+  /**
+   * Actualiza los detalles de un restaurante.
+   * @param {number} restaurantId - ID del restaurante.
+   * @param {Object} updates - Objeto con los campos a actualizar.
+   * @returns {Promise<void>}
+   */
+  async updateRestaurant(restaurantId, updates) {
+    const fields = [];
+    const values = [];
+
+    if (updates.nombre) {
+      fields.push("nombre = ?");
+      values.push(updates.nombre);
+    }
+    if (updates.correo) {
+      fields.push("correo = ?");
+      values.push(updates.correo);
+    }
+    if (updates.telefono) {
+      fields.push("telefono = ?");
+      values.push(updates.telefono);
+    }
+    if (updates.direccionId) {
+      fields.push("direccion_id = ?");
+      values.push(updates.direccionId);
+    }
+    if (updates.capacidadReservas) {
+      fields.push("capacidad_reservas = ?");
+      values.push(updates.capacidadReservas);
+    }
+    if (updates.estado) {
+      fields.push("estado = ?");
+      values.push(updates.estado);
+    }
+
+    if (fields.length === 0) {
+      throw new Error("No hay campos para actualizar");
+    }
+
+    const query = `UPDATE restaurante SET ${fields.join(", ")} WHERE id = ?`;
+    values.push(restaurantId);
+
+    await db.execute(query, values);
+  }
+
+  /**
+   * Actualiza los detalles de una dirección.
+   * @param {number} direccionId - ID de la dirección.
+   * @param {Object} updates - Objeto con los campos a actualizar.
+   * @returns {Promise<void>}
+   */
+  async updateAddress(direccionId, updates) {
+    const fields = [];
+    const values = [];
+
+    if (updates.direccion) {
+      fields.push("direccion = ?");
+      values.push(updates.direccion);
+    }
+    // Agrega otros campos de dirección que quieras actualizar aquí
+
+    if (fields.length === 0) {
+      throw new Error("No hay campos para actualizar en la dirección");
+    }
+
+    const query = `UPDATE direccion SET ${fields.join(", ")} WHERE id = ?`;
+    values.push(direccionId);
+
+    await db.execute(query, values);
+  }
 }
 
 module.exports = new RestaurantRepository();
