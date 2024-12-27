@@ -19,18 +19,6 @@ describe('Rutas de Restaurantes', () => {
 
     restaurantService.createRestaurant.mockResolvedValue(newRestaurant);
 
-    /**
-     * Realiza una solicitud POST a la ruta '/api/restaurants' para crear un nuevo restaurante.
-     * 
-     * @param {Object} app - La instancia de la aplicación Express.
-     * @param {Object} restaurantData - Los datos del restaurante que se van a enviar en la solicitud.
-     * @param {Object} addressData - Los datos de la dirección del restaurante.
-     * @param {number} cityId - El ID de la ciudad donde se encuentra el restaurante.
-     * @returns {Object} res - El objeto de respuesta de la solicitud.
-     * 
-     * @description Esta prueba tiene como objetivo verificar que la ruta para crear un nuevo restaurante
-     * funciona correctamente y que los datos enviados en la solicitud se procesan adecuadamente.
-     */
     const res = await request(app)
       .post('/api/restaurants')
       .send({ restaurantData, addressData, cityId });
@@ -53,5 +41,79 @@ describe('Rutas de Restaurantes', () => {
     expect(res.body.data).toEqual(restaurant.toJSON());
   });
 
+  it('debería obtener todos los restaurantes por ciudad', async () => {
+    const cityId = 1;
+    const restaurants = [
+      new Restaurant({ id: 1, nombre: 'Test Restaurant 1' }),
+      new Restaurant({ id: 2, nombre: 'Test Restaurant 2' }),
+    ];
 
+    restaurantService.getAllRestaurantsByCity.mockResolvedValue(restaurants);
+
+    const res = await request(app).get(`/api/restaurants/city/${cityId}`);
+
+    expect(res.statusCode).toEqual(200);
+    expect(res.body.status).toBe('success');
+    expect(res.body.data).toEqual(restaurants.map(r => r.toJSON()));
+  });
+
+  it('debería obtener todos los restaurantes por departamento', async () => {
+    const departmentId = 1;
+    const restaurants = [
+      new Restaurant({ id: 1, nombre: 'Test Restaurant 1' }),
+      new Restaurant({ id: 2, nombre: 'Test Restaurant 2' }),
+    ];
+
+    restaurantService.getAllRestaurantsByDepartment.mockResolvedValue(restaurants);
+
+    const res = await request(app).get(`/api/restaurants/department/${departmentId}`);
+
+    expect(res.statusCode).toEqual(200);
+    expect(res.body.status).toBe('success');
+    expect(res.body.data).toEqual(restaurants.map(r => r.toJSON()));
+  });
+
+  it('debería obtener todos los restaurantes por país', async () => {
+    const countryId = 1;
+    const restaurants = [
+      new Restaurant({ id: 1, nombre: 'Test Restaurant 1' }),
+      new Restaurant({ id: 2, nombre: 'Test Restaurant 2' }),
+    ];
+
+    restaurantService.getAllRestaurantsByCountry.mockResolvedValue(restaurants);
+
+    const res = await request(app).get(`/api/restaurants/country/${countryId}`);
+
+    expect(res.statusCode).toEqual(200);
+    expect(res.body.status).toBe('success');
+    expect(res.body.data).toEqual(restaurants.map(r => r.toJSON()));
+  });
+
+  it('debería eliminar un restaurante por ID', async () => {
+    const restaurantId = 1;
+
+    restaurantService.deleteRestaurant.mockResolvedValue();
+
+    const res = await request(app).delete(`/api/restaurants/${restaurantId}`);
+
+    expect(res.statusCode).toEqual(200);
+    expect(res.body.status).toBe('success');
+    expect(res.body.message).toBe('Restaurante eliminado correctamente');
+  });
+
+  it('debería actualizar un restaurante por ID', async () => {
+    const restaurantId = 1;
+    const updates = { nombre: 'Updated Restaurant' };
+    const updatedRestaurant = new Restaurant({ id: restaurantId, ...updates });
+
+    restaurantService.updateRestaurant.mockResolvedValue(updatedRestaurant);
+
+    const res = await request(app)
+      .patch(`/api/restaurants/${restaurantId}`)
+      .send(updates);
+
+    expect(res.statusCode).toEqual(200);
+    expect(res.body.status).toBe('success');
+    expect(res.body.data).toEqual(updatedRestaurant.toJSON());
+  });
 });
