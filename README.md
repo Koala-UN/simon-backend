@@ -12,6 +12,8 @@ Este proyecto utiliza las siguientes dependencias:
 - **`dotenv`**: Manejo de variables de entorno.
 - **`nodemon`**: Reinicio automático del servidor en desarrollo.
 - **`cors`**: Habilita el acceso desde otros orígenes para peticiones HTTP.
+- **`jest`**: Framework de pruebas para JavaScript.
+- **`supertest`**: Biblioteca para probar aplicaciones HTTP.
 ---
 
 ## **Instalación**
