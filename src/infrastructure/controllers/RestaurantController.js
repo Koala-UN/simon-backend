@@ -78,6 +78,38 @@ class RestaurantController {
       data: restaurants.map((restaurant) => restaurant.toJSON()),
     });
   });
+
+  /**
+   * Maneja la solicitud DELETE /restaurantes/:restaurantId.
+   * @param {Object} req - Objeto de solicitud.
+   * @param {Object} res - Objeto de respuesta.
+   */
+  deleteRestaurant = asyncHandler(async (req, res) => {
+    const { restaurantId } = req.params;
+    await restaurantService.deleteRestaurant(restaurantId);
+    res.status(200).json({
+      status: "success",
+      message: "Restaurante eliminado correctamente",
+    });
+  });
+
+  /**
+   * Maneja la solicitud PATCH /restaurantes/:restaurantId.
+   * @param {Object} req - Objeto de solicitud.
+   * @param {Object} res - Objeto de respuesta.
+   */
+  updateRestaurant = asyncHandler(async (req, res) => {
+    const { restaurantId } = req.params;
+    const updates = req.body;
+    const updatedRestaurant = await restaurantService.updateRestaurant(
+      restaurantId,
+      updates
+    );
+    res.status(200).json({
+      status: "success",
+      data: updatedRestaurant.toJSON(),
+    });
+  });
 }
 
 module.exports = new RestaurantController();

@@ -1,11 +1,15 @@
+const City = require("./CityModel");
+const Department = require("./DepartmentModel");
+const Country = require("./CountryModel");
+
 class Address {
   constructor(data = {}) {
     this.id = data.id || null;
     this.ciudadId = data.ciudadId || null;
     this.direccion = data.direccion || null;
-    this.ciudadNombre = data.ciudadNombre || null;
-    this.departamentoNombre = data.departamentoNombre || null;
-    this.paisNombre = data.paisNombre || null;
+    this.ciudad = data.ciudad ? new City(data.ciudad) : null;
+    this.departamento = data.departamento ? new Department(data.departamento) : null;
+    this.pais = data.pais ? new Country(data.pais) : null;
   }
 
   /**
@@ -18,9 +22,20 @@ class Address {
       id: row.direccion_id,
       ciudadId: row.ciudad_id,
       direccion: row.direccion,
-      ciudadNombre: row.ciudad_nombre,
-      departamentoNombre: row.departamento_nombre,
-      paisNombre: row.pais_nombre,
+      ciudad: {
+        id: row.ciudad_id,
+        departamentoId: row.departamento_id,
+        nombre: row.ciudad_nombre,
+      },
+      departamento: {
+        id: row.departamento_id,
+        paisId: row.pais_id,
+        nombre: row.departamento_nombre,
+      },
+      pais: {
+        id: row.pais_id,
+        nombre: row.pais_nombre,
+      },
     });
   }
 
@@ -33,9 +48,9 @@ class Address {
       id: this.id,
       ciudadId: this.ciudadId,
       direccion: this.direccion,
-      ciudadNombre: this.ciudadNombre,
-      departamentoNombre: this.departamentoNombre,
-      paisNombre: this.paisNombre,
+      ciudad: this.ciudad ? this.ciudad.toJSON() : null,
+      departamento: this.departamento ? this.departamento.toJSON() : null,
+      pais: this.pais ? this.pais.toJSON() : null,
     };
   }
 }
