@@ -1,5 +1,6 @@
 const state = require("../../utils/state");
 const Address = require("./AddressModel");
+const category = require("../../utils/cagetory");
 
 class Restaurant {
   constructor(data = {}) {
@@ -13,8 +14,21 @@ class Restaurant {
     this.capacidadReservas = data.capacidadReservas || null;
     this.direccionId = data.direccionId || null;
     this.address = data.address ? new Address(data.address) : null;
+    this.categoria = data.categoria || null;
+    this.descripcion = data.descripcion || null;
+    this.validateCategory();
   }
-
+  validateCategory() {
+    // Verificar si la categoría existe en category.Platillo
+    const validCategories = Object.values(category.Restaurante);
+    if (this.categoria && !validCategories.includes(this.categoria)) {
+      throw new Error(
+        `La categoría '${
+          this.categoria
+        }' no es válida. Opciones: ${validCategories.join(", ")}`
+      );
+    }
+  }
   /**
    * Crea una instancia de Restaurant a partir de una fila de la base de datos.
    * @param {Object} row - Fila de la base de datos.
@@ -31,6 +45,8 @@ class Restaurant {
       idTransaccional: row.id_transaccional,
       capacidadReservas: row.capacidad_reservas,
       direccionId: row.direccion_id,
+      categoria: row.categoria,
+      descripcion: row.descripcion,
       address: row.address ? Address.fromDB(row.address) : null,
     });
   }
@@ -50,6 +66,8 @@ class Restaurant {
       idTransaccional: this.idTransaccional,
       capacidadReservas: this.capacidadReservas,
       direccionId: this.direccionId,
+      categoria: this.categoria,
+      descripcion: this.descripcion,
       address: this.address ? this.address.toJSON() : null,
     };
   }
