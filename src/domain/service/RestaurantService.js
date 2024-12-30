@@ -1,4 +1,5 @@
 const restaurantRepository = require("../../infrastructure/repositories/RestaurantRepository");
+const category = require("../../utils/cagetory");
 const AppError = require("../exception/AppError");
 const RestaurantServiceInterface = require("../interfaces/restaurant/ServiceInterface");
 
@@ -70,41 +71,6 @@ class RestaurantService extends RestaurantServiceInterface {
     return await restaurantRepository.findById(restaurantId);
   }
 
-  /**
-   * Encuentra todos los restaurantes por ciudad.
-   * @param {number} cityId - ID de la ciudad.
-   * @returns {Promise<Array<Restaurant>>} Lista de restaurantes.
-   */
-  async getAllRestaurantsByCity(cityId) {
-    if (!cityId) {
-      throw new AppError("El ID de la ciudad es requerido", 400);
-    }
-    return await restaurantRepository.findAllByCity(cityId);
-  }
-
-  /**
-   * Encuentra todos los restaurantes por departamento.
-   * @param {number} departmentId - ID del departamento.
-   * @returns {Promise<Array<Restaurant>>} Lista de restaurantes.
-   */
-  async getAllRestaurantsByDepartment(departmentId) {
-    if (!departmentId) {
-      throw new AppError("El ID del departamento es requerido", 400);
-    }
-    return await restaurantRepository.findAllByDepartment(departmentId);
-  }
-
-  /**
-   * Encuentra todos los restaurantes por país.
-   * @param {number} countryId - ID del país.
-   * @returns {Promise<Array<Restaurant>>} Lista de restaurantes.
-   */
-  async getAllRestaurantsByCountry(countryId) {
-    if (!countryId) {
-      throw new AppError("El ID del país es requerido", 400);
-    }
-    return await restaurantRepository.findAllByCountry(countryId);
-  }
 
   /**
    * Encuentra un restaurante por su ID.
@@ -119,40 +85,23 @@ class RestaurantService extends RestaurantServiceInterface {
   }
 
   /**
-   * Encuentra todos los restaurantes por ciudad.
-   * @param {number} cityId - ID de la ciudad.
-   * @returns {Promise<Array<Restaurant>>} Lista de restaurantes.
+   * Obtiene todos los restaurantes que coinciden con los filtros proporcionados.
+   *
+   * @param {Object} filters - Filtros para aplicar a la búsqueda de restaurantes.
+   * @returns {Promise<Array>} - Una promesa que resuelve con un arreglo de restaurantes.
    */
-  async getAllRestaurantsByCity(cityId) {
-    if (!cityId) {
-      throw new AppError("El ID de la ciudad es requerido", 400);
+  async getAll(filters) {
+    try {
+      if (!Object.values(category.Restaurante).includes(filters.category) && filters.category != undefined) {
+        throw new AppError("La categoria no es valida", 400);
+      }
+      return await restaurantRepository.findAll(filters);
+    } catch (error) {
+      throw new AppError("Error al obtener los restaurantes", 500);
     }
-    return await restaurantRepository.findAllByCity(cityId);
   }
-
-  /**
-   * Encuentra todos los restaurantes por departamento.
-   * @param {number} departmentId - ID del departamento.
-   * @returns {Promise<Array<Restaurant>>} Lista de restaurantes.
-   */
-  async getAllRestaurantsByDepartment(departmentId) {
-    if (!departmentId) {
-      throw new AppError("El ID del departamento es requerido", 400);
-    }
-    return await restaurantRepository.findAllByDepartment(departmentId);
-  }
-
-  /**
-   * Encuentra todos los restaurantes por país.
-   * @param {number} countryId - ID del país.
-   * @returns {Promise<Array<Restaurant>>} Lista de restaurantes.
-   */
-  async getAllRestaurantsByCountry(countryId) {
-    if (!countryId) {
-      throw new AppError("El ID del país es requerido", 400);
-    }
-    return await restaurantRepository.findAllByCountry(countryId);
-  }
+    
+  
 
   /**
    * Elimina un restaurante por su ID.

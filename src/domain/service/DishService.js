@@ -54,13 +54,14 @@ class DishService extends DishServiceInterface {
   /**
    * Lista todos los platillos por restaurante.
    * @param {number} restauranteId - ID del restaurante.
+   * @param {string} category - Categoria del platillo.
    * @returns {Promise<Array<Dish>>} Lista de platillos.
    */
-  async getAllByRestaurant(restauranteId) {
+  async getAllByRestaurant(restauranteId,category) {
     if (!restauranteId) {
       throw new AppError("El ID del restaurante es requerido", 400);
     }
-    return await dishRepository.findAllByRestaurant(restauranteId);
+    return await dishRepository.findAllByRestaurant(restauranteId,category);
   }
 
   /**

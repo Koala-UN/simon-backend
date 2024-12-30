@@ -34,48 +34,33 @@ class RestaurantController {
   });
 
   /**
-   * Maneja la solicitud GET /restaurantes/ciudad/:cityId.
-   * @param {Object} req - Objeto de solicitud.
-   * @param {Object} res - Objeto de respuesta.
+   * Obtiene todos los restaurantes según los filtros proporcionados.
+   *
+   * @async
+   * @function getAllRestaurants
+   * @param {Object} req - Objeto de solicitud de Express.
+   * @param {Object} req.query - Parámetros de consulta de la solicitud.
+   * @param {string} req.query.countryId - ID del país para filtrar los restaurantes.
+   * @param {string} req.query.departmentId - ID del departamento para filtrar los restaurantes.
+   * @param {string} req.query.cityId - ID de la ciudad para filtrar los restaurantes.
+   * @param {string} req.query.category - Categoría para filtrar los restaurantes.
+   * @param {Object} res - Objeto de respuesta de Express.
+   * @returns {Promise<void>} - Devuelve una promesa que resuelve en una respuesta JSON con el estado y los datos de los restaurantes.
+   *
+   * @description Este endpoint permite obtener una lista de todos los restaurantes que coinciden con los filtros especificados en los parámetros de consulta. Los filtros disponibles son countryId, departmentId, cityId y category.
    */
-  getAllRestaurantsByCity = asyncHandler(async (req, res) => {
-    const { cityId } = req.params;
-    const restaurants = await restaurantService.getAllRestaurantsByCity(cityId);
+  getAllRestaurants = asyncHandler(async (req, res) => {
+    const { countryId, departmentId, cityId, category } = req.query;
+    const filters = {
+      countryId,
+      departmentId,
+      cityId,
+      category,
+    };
+    const restaurants = await restaurantService.getAll(filters);
     res.status(200).json({
       status: "success",
-      data: restaurants.map((restaurant) => restaurant.toJSON()),
-    });
-  });
-
-  /**
-   * Maneja la solicitud GET /restaurantes/departamento/:departmentId.
-   * @param {Object} req - Objeto de solicitud.
-   * @param {Object} res - Objeto de respuesta.
-   */
-  getAllRestaurantsByDepartment = asyncHandler(async (req, res) => {
-    const { departmentId } = req.params;
-    const restaurants = await restaurantService.getAllRestaurantsByDepartment(
-      departmentId
-    );
-    res.status(200).json({
-      status: "success",
-      data: restaurants.map((restaurant) => restaurant.toJSON()),
-    });
-  });
-
-  /**
-   * Maneja la solicitud GET /restaurantes/pais/:countryId.
-   * @param {Object} req - Objeto de solicitud.
-   * @param {Object} res - Objeto de respuesta.
-   */
-  getAllRestaurantsByCountry = asyncHandler(async (req, res) => {
-    const { countryId } = req.params;
-    const restaurants = await restaurantService.getAllRestaurantsByCountry(
-      countryId
-    );
-    res.status(200).json({
-      status: "success",
-      data: restaurants.map((restaurant) => restaurant.toJSON()),
+      data: restaurants.map((r) => r.toJSON()),
     });
   });
 
