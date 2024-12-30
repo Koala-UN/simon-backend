@@ -103,13 +103,16 @@ class DishService extends DishServiceInterface {
       "descripcion",
       "precio",
       "existencias",
+      "categoria",
       "restauranteId",
+
     ];
     Object.keys(dishData).forEach((field) => {
       if (!allowedFields.includes(field)) {
         throw new AppError(`El campo ${field} no es permitido`, 400);
       }
     });
+    
   }
 }
 
