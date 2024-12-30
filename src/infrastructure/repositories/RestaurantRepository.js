@@ -108,52 +108,56 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
    * @param {number} cityId - ID de la ciudad.
    * @returns {Promise<Array<Restaurant>>} Lista de restaurantes.
    */
-  async findAllByCity(cityId) {
-    const query = `
-          SELECT r.*, d.*, c.id AS ciudad_id, c.nombre AS ciudad_nombre, dp.id AS departamento_id, dp.nombre AS departamento_nombre, p.id AS pais_id, p.nombre AS pais_nombre
-          FROM restaurante r
-          JOIN direccion d ON r.direccion_id = d.id
-          JOIN ciudad c ON d.ciudad_id = c.id
-          JOIN departamento dp ON c.departamento_id = dp.id
-          JOIN pais p ON dp.pais_id = p.id
-          WHERE c.id = ?
-        `;
-    const [rows] = await db.execute(query, [cityId]);
-    return rows.map((row) => {
-      const address = Address.fromDB(row);
-      return new Restaurant({
-        id: row.id,
-        nombre: row.nombre,
-        correo: row.correo,
-        telefono: row.telefono,
-        estado: row.estado,
-        idAtenticacion: row.id_atenticacion,
-        idTransaccional: row.id_transaccional,
-        capacidadReservas: row.capacidad_reservas,
-        direccionId: row.direccion_id,
-        categoria: row.categoria,
-        descripcion: row.descripcion,
-        address: address,
-      });
-    });
-  }
 
   /**
-   * Encuentra todos los restaurantes por departamento.
-   * @param {number} departmentId - ID del departamento.
-   * @returns {Promise<Array<Restaurant>>} Lista de restaurantes.
+   * Finds all restaurants based on the provided filters.
+   *
+   * @param {Object} filters - The filters to apply to the query.
+   * @param {number} [filters.countryId] - The ID of the country to filter by.
+   * @param {number} [filters.departmentId] - The ID of the department to filter by.
+   * @param {number} [filters.cityId] - The ID of the city to filter by.
+   * @param {string} [filters.category] - The category of the restaurant to filter by.
+   * @returns {Promise<Restaurant[]>} A promise that resolves to an array of Restaurant objects.
    */
-  async findAllByDepartment(departmentId) {
-    const query = `
-          SELECT r.*, d.*, c.id AS ciudad_id, c.nombre AS ciudad_nombre, dp.id AS departamento_id, dp.nombre AS departamento_nombre, p.id AS pais_id, p.nombre AS pais_nombre
-          FROM restaurante r
-          JOIN direccion d ON r.direccion_id = d.id
-          JOIN ciudad c ON d.ciudad_id = c.id
-          JOIN departamento dp ON c.departamento_id = dp.id
-          JOIN pais p ON dp.pais_id = p.id
-          WHERE dp.id = ?
-        `;
-    const [rows] = await db.execute(query, [departmentId]);
+
+  async findAll({ countryId, departmentId, cityId, category }) {
+    let query = `
+    SELECT 
+      r.*, 
+      d.*, 
+      c.id AS ciudad_id, 
+      c.nombre AS ciudad_nombre,
+      dp.id AS departamento_id, 
+      dp.nombre AS departamento_nombre,
+      p.id AS pais_id, 
+      p.nombre AS pais_nombre
+    FROM restaurante r
+    JOIN direccion d ON r.direccion_id = d.id
+    JOIN ciudad c ON d.ciudad_id = c.id
+    JOIN departamento dp ON c.departamento_id = dp.id
+    JOIN pais p ON dp.pais_id = p.id
+    WHERE 1 = 1
+  `;
+    const params = [];
+
+    if (countryId) {
+      query += " AND p.id = ?";
+      params.push(countryId);
+    }
+    if (departmentId) {
+      query += " AND dp.id = ?";
+      params.push(departmentId);
+    }
+    if (cityId) {
+      query += " AND c.id = ?";
+      params.push(cityId);
+    }
+    if (category) {
+      query += " AND r.categoria = ?";
+      params.push(category);
+    }
+
+    const [rows] = await db.execute(query, params);
     return rows.map((row) => {
       const address = Address.fromDB(row);
       return new Restaurant({
@@ -168,46 +172,10 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
         direccionId: row.direccion_id,
         categoria: row.categoria,
         descripcion: row.descripcion,
-        address: address,
+        address,
       });
     });
   }
-
-  /**
-   * Encuentra todos los restaurantes por país.
-   * @param {number} countryId - ID del país.
-   * @returns {Promise<Array<Restaurant>>} Lista de restaurantes.
-   */
-  async findAllByCountry(countryId) {
-    const query = `
-          SELECT r.*, d.*, c.id AS ciudad_id, c.nombre AS ciudad_nombre, dp.id AS departamento_id, dp.nombre AS departamento_nombre, p.id AS pais_id, p.nombre AS pais_nombre
-          FROM restaurante r
-          JOIN direccion d ON r.direccion_id = d.id
-          JOIN ciudad c ON d.ciudad_id = c.id
-          JOIN departamento dp ON c.departamento_id = dp.id
-          JOIN pais p ON dp.pais_id = p.id
-          WHERE p.id = ?
-        `;
-    const [rows] = await db.execute(query, [countryId]);
-    return rows.map((row) => {
-      const address = Address.fromDB(row);
-      return new Restaurant({
-        id: row.id,
-        nombre: row.nombre,
-        correo: row.correo,
-        telefono: row.telefono,
-        estado: row.estado,
-        idAtenticacion: row.id_atenticacion,
-        idTransaccional: row.id_transaccional,
-        capacidadReservas: row.capacidad_reservas,
-        direccionId: row.direccion_id,
-        categoria: row.categoria,
-        descripcion: row.descripcion,
-        address: address,
-      });
-    });
-  }
-
   /**
    * Elimina un restaurante por su ID y la dirección asociada.
    * @param {number} restaurantId - ID del restaurante.
