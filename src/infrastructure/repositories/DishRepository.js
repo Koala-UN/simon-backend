@@ -10,14 +10,15 @@ class DishRepository extends DishRepositoryInterface {
    */
   async create(dishData) {
     const query = `
-      INSERT INTO platillo (nombre, descripcion, precio, existencias, restaurante_id)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO platillo (nombre, descripcion, precio, existencias,categoria, restaurante_id)
+      VALUES (?, ?, ?, ?, ?,?)
     `;
     const [result] = await db.execute(query, [
       dishData.nombre,
       dishData.descripcion,
       dishData.precio,
       dishData.existencias,
+      dishData.categoria,
       dishData.restauranteId,
     ]);
 
@@ -46,7 +47,7 @@ class DishRepository extends DishRepositoryInterface {
    */
   async findAllByRestaurant(restauranteId) {
     const query = `
-      SELECT id, nombre, descripcion, precio, existencias, restaurante_id
+      SELECT id, nombre, descripcion, precio, existencias,categoria, restaurante_id
       FROM platillo
       WHERE restaurante_id = ?
     `;
@@ -60,7 +61,7 @@ class DishRepository extends DishRepositoryInterface {
    * @returns {Promise<Dish>} El platillo encontrado.
    */
   async findById(dishId) {
-    const query = `SELECT id, nombre, descripcion, precio, existencias, restaurante_id FROM platillo WHERE id = ?`;
+    const query = `SELECT id, nombre, descripcion, precio, existencias,categoria, restaurante_id FROM platillo WHERE id = ?`;
     const [rows] = await db.execute(query, [dishId]);
     if (rows.length === 0) {
       throw new AppError(`Platillo con ID ${dishId} no encontrado`, 404);
@@ -98,7 +99,10 @@ class DishRepository extends DishRepositoryInterface {
       fields.push("restaurante_id = ?");
       values.push(dishData.restauranteId);
     }
-
+    if(dishData.categoria !== undefined){
+      fields.push("categoria = ?");
+      values.push(dishData.categoria);
+    }
     if (fields.length === 0) {
       throw new AppError("No hay campos para actualizar", 400);
     }

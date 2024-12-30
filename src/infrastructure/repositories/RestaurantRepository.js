@@ -25,8 +25,8 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
 
       // Insertar restaurante
       const [restaurantResult] = await connection.execute(
-        `INSERT INTO restaurante (nombre, correo, telefono, estado, id_atenticacion, id_transaccional, capacidad_reservas, direccion_id)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO restaurante (nombre, correo, telefono, estado, id_atenticacion, id_transaccional, capacidad_reservas,categoria,descripcion, direccion_id)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?,?, ?)`,
         [
           restaurantData.nombre,
           restaurantData.correo,
@@ -35,6 +35,8 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
           restaurantData.idAtenticacion,
           restaurantData.idTransaccional,
           restaurantData.capacidadReservas,
+          restaurantData.categoria,
+          restaurantData.descripcion,
           addressId,
         ]
       );
@@ -95,6 +97,8 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
       idTransaccional: row.id_transaccional,
       capacidadReservas: row.capacidad_reservas,
       direccionId: row.direccion_id,
+      categoria: row.categoria,
+      descripcion: row.descripcion,
       address: address,
     });
   }
@@ -127,6 +131,8 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
         idTransaccional: row.id_transaccional,
         capacidadReservas: row.capacidad_reservas,
         direccionId: row.direccion_id,
+        categoria: row.categoria,
+        descripcion: row.descripcion,
         address: address,
       });
     });
@@ -160,6 +166,8 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
         idTransaccional: row.id_transaccional,
         capacidadReservas: row.capacidad_reservas,
         direccionId: row.direccion_id,
+        categoria: row.categoria,
+        descripcion: row.descripcion,
         address: address,
       });
     });
@@ -193,6 +201,8 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
         idTransaccional: row.id_transaccional,
         capacidadReservas: row.capacidad_reservas,
         direccionId: row.direccion_id,
+        categoria: row.categoria,
+        descripcion: row.descripcion,
         address: address,
       });
     });
@@ -267,6 +277,14 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
     if (updates.estado) {
       fields.push("estado = ?");
       values.push(updates.estado);
+    }
+    if (updates.categoria) {
+      fields.push("categoria = ?");
+      values.push(updates.categoria);
+    }
+    if (updates.descripcion) {
+      fields.push("descripcion = ?");
+      values.push(updates.descripcion);
     }
 
     if (fields.length === 0) {
