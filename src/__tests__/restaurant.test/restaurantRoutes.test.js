@@ -1,95 +1,69 @@
-const request = require('supertest');
-const express = require('express');
-const restaurantRoutes = require('../../infrastructure/routes/RestaurantRoutes');
-const Restaurant = require('../../domain/models/RestaurantModel');
-const restaurantService = require('../../domain/service/RestaurantService');
+const request = require("supertest");
+const express = require("express");
+const restaurantRoutes = require("../../infrastructure/routes/RestaurantRoutes");
+const Restaurant = require("../../domain/models/RestaurantModel");
+const restaurantService = require("../../domain/service/RestaurantService");
 
 const app = express();
 app.use(express.json());
-app.use('/api/restaurants', restaurantRoutes);
+app.use("/api/restaurants", restaurantRoutes);
 
-jest.mock('../../domain/service/RestaurantService');
+jest.mock("../../domain/service/RestaurantService");
 
-describe('Rutas de Restaurantes', () => {
-  it('debería crear un nuevo restaurante', async () => {
-    const restaurantData = { nombre: 'Test Restaurant', correo: 'test@example.com' };
-    const addressData = { street: '123 Test St' };
+describe("Rutas de Restaurantes", () => {
+  it("debería crear un nuevo restaurante", async () => {
+    const restaurantData = {
+      nombre: "Test Restaurant",
+      correo: "test@example.com",
+    };
+    const addressData = { street: "123 Test St" };
     const cityId = 1;
     const newRestaurant = new Restaurant({ id: 1, ...restaurantData });
 
     restaurantService.createRestaurant.mockResolvedValue(newRestaurant);
 
     const res = await request(app)
-      .post('/api/restaurants')
+      .post("/api/restaurants")
       .send({ restaurantData, addressData, cityId });
 
     expect(res.statusCode).toEqual(201);
-    expect(res.body.status).toBe('success');
+    expect(res.body.status).toBe("success");
     expect(res.body.data).toEqual(newRestaurant.toJSON());
   });
 
-  it('debería obtener un restaurante por ID', async () => {
+  it("debería obtener un restaurante por ID", async () => {
     const restaurantId = 1;
-    const restaurant = new Restaurant({ id: restaurantId, nombre: 'Test Restaurant' });
+    const restaurant = new Restaurant({
+      id: restaurantId,
+      nombre: "Test Restaurant",
+    });
 
     restaurantService.getRestaurantById.mockResolvedValue(restaurant);
 
     const res = await request(app).get(`/api/restaurants/${restaurantId}`);
 
     expect(res.statusCode).toEqual(200);
-    expect(res.body.status).toBe('success');
+    expect(res.body.status).toBe("success");
     expect(res.body.data).toEqual(restaurant.toJSON());
   });
 
-  it('debería obtener todos los restaurantes por ciudad', async () => {
-    const cityId = 1;
+  it("debería obtener todos los restaurantes con filtros opcionales", async () => {
+    const filters = { cityId: 1, category: "Entradas" };
     const restaurants = [
-      new Restaurant({ id: 1, nombre: 'Test Restaurant 1' }),
-      new Restaurant({ id: 2, nombre: 'Test Restaurant 2' }),
+      new Restaurant({ id: 1, nombre: "Test Restaurant 1" }),
+      new Restaurant({ id: 2, nombre: "Test Restaurant 2" }),
     ];
 
-    restaurantService.getAllRestaurantsByCity.mockResolvedValue(restaurants);
+    restaurantService.getAll.mockResolvedValue(restaurants);
 
-    const res = await request(app).get(`/api/restaurants/city/${cityId}`);
-
-    expect(res.statusCode).toEqual(200);
-    expect(res.body.status).toBe('success');
-    expect(res.body.data).toEqual(restaurants.map(r => r.toJSON()));
-  });
-
-  it('debería obtener todos los restaurantes por departamento', async () => {
-    const departmentId = 1;
-    const restaurants = [
-      new Restaurant({ id: 1, nombre: 'Test Restaurant 1' }),
-      new Restaurant({ id: 2, nombre: 'Test Restaurant 2' }),
-    ];
-
-    restaurantService.getAllRestaurantsByDepartment.mockResolvedValue(restaurants);
-
-    const res = await request(app).get(`/api/restaurants/department/${departmentId}`);
+    const res = await request(app).get("/api/restaurants").query(filters);
 
     expect(res.statusCode).toEqual(200);
-    expect(res.body.status).toBe('success');
-    expect(res.body.data).toEqual(restaurants.map(r => r.toJSON()));
+    expect(res.body.status).toBe("success");
+    expect(res.body.data).toEqual(restaurants.map((r) => r.toJSON()));
   });
 
-  it('debería obtener todos los restaurantes por país', async () => {
-    const countryId = 1;
-    const restaurants = [
-      new Restaurant({ id: 1, nombre: 'Test Restaurant 1' }),
-      new Restaurant({ id: 2, nombre: 'Test Restaurant 2' }),
-    ];
-
-    restaurantService.getAllRestaurantsByCountry.mockResolvedValue(restaurants);
-
-    const res = await request(app).get(`/api/restaurants/country/${countryId}`);
-
-    expect(res.statusCode).toEqual(200);
-    expect(res.body.status).toBe('success');
-    expect(res.body.data).toEqual(restaurants.map(r => r.toJSON()));
-  });
-
-  it('debería eliminar un restaurante por ID', async () => {
+  it("debería eliminar un restaurante por ID", async () => {
     const restaurantId = 1;
 
     restaurantService.deleteRestaurant.mockResolvedValue();
@@ -97,13 +71,13 @@ describe('Rutas de Restaurantes', () => {
     const res = await request(app).delete(`/api/restaurants/${restaurantId}`);
 
     expect(res.statusCode).toEqual(200);
-    expect(res.body.status).toBe('success');
-    expect(res.body.message).toBe('Restaurante eliminado correctamente');
+    expect(res.body.status).toBe("success");
+    expect(res.body.message).toBe("Restaurante eliminado correctamente");
   });
 
-  it('debería actualizar un restaurante por ID', async () => {
+  it("debería actualizar un restaurante por ID", async () => {
     const restaurantId = 1;
-    const updates = { nombre: 'Updated Restaurant' };
+    const updates = { nombre: "Updated Restaurant" };
     const updatedRestaurant = new Restaurant({ id: restaurantId, ...updates });
 
     restaurantService.updateRestaurant.mockResolvedValue(updatedRestaurant);
@@ -113,7 +87,7 @@ describe('Rutas de Restaurantes', () => {
       .send(updates);
 
     expect(res.statusCode).toEqual(200);
-    expect(res.body.status).toBe('success');
+    expect(res.body.status).toBe("success");
     expect(res.body.data).toEqual(updatedRestaurant.toJSON());
   });
 });
