@@ -11,18 +11,19 @@ class OrderService extends OrderServiceInterface {
   /**
    * Recupera todos los pedidos del repositorio.
    *
+   * @param {number} restaurantId - El identificador del restaurante.
    * @returns {Promise<Array<Order>>} Una promesa que se resuelve en un array de objetos Order.
    * @throws {NotFoundError} Si no se encuentran pedidos en el repositorio.
    */
-  async getAll() {
-    const rows = await OrderRepository.findAll();
+  async getAll(restaurantId) {
+    const rows = await OrderRepository.findAll(restaurantId);
     if (!rows || rows.length === 0) {
       throw new NotFoundError("No se encontraron pedidos.");
     }
     return rows.map((row) => Order.fromDB(row));
   }
 
- /**
+  /**
    * Obtiene todos los platillos asociados a un pedido específico.
    * @param {number} id - ID del pedido.
    * @returns {Promise<Object[]>} - Lista de platillos asociados al pedido.
@@ -32,7 +33,9 @@ class OrderService extends OrderServiceInterface {
       const orderDetails = await OrderRepository.findOrderById(id);
       return orderDetails;
     } catch (error) {
-      throw new AppError(`Error al obtener el pedido con ID ${id}: ${error.message}`)
+      throw new AppError(
+        `Error al obtener el pedido con ID ${id}: ${error.message}`
+      );
     }
   }
   /**
