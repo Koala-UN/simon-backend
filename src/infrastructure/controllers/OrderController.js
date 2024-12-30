@@ -17,12 +17,14 @@ class OrderController {
    */
   async getAllOrders(req, res, next) {
     try {
-      const order = await OrderService.getAll();
-      res.json(order);
+      const { restaurantId } = req.query;
+      const orders = await OrderService.getAll(restaurantId);
+      res.json(orders);
     } catch (error) {
       next(new AppError(`Failed to retrieve orders: ${error.message}`, 500));
     }
   }
+
   /**
    * Obtiene todos los platillos asociados a un pedido específico.
    * @param {Object} req - El objeto de solicitud.

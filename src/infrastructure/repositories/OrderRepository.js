@@ -8,6 +8,7 @@ class OrderRepository extends OrderRepositoryInterface {
   /**
    * Recupera todos los pedidos de la base de datos, incluyendo su estado y total.
    *
+   * @param {number} restaurantId - El identificador del restaurante.
    * @returns {Promise<Array>} Una promesa que resuelve a un array de objetos que representan los pedidos.
    * Cada objeto contiene las siguientes propiedades:
    * - id: El identificador del pedido.
@@ -17,8 +18,9 @@ class OrderRepository extends OrderRepositoryInterface {
    * - estado: El estado del pedido, que puede ser 'PENDIENTE' o 'ENTREGADO'.
    * - total: El total del pedido, que es la suma de los totales de los platillos asociados al pedido.
    */
-  async findAll() {
-    const [rows] = await pool.query(`
+  async findAll(restaurantId) {
+    const [rows] = await pool.query(
+      `
             SELECT 
                 p.id, 
                 p.fecha, 
@@ -32,8 +34,12 @@ class OrderRepository extends OrderRepositoryInterface {
                 IFNULL(SUM(pp.total), 0) AS total
             FROM pedido p
             LEFT JOIN platillo_has_pedido pp ON p.id = pp.pedido_id
+            JOIN mesa m ON p.mesa_id = m.id
+            WHERE m.restaurante_id = ?
             GROUP BY p.id, p.fecha, p.hora, p.mesa_id
-        `);
+        `,
+      [restaurantId]
+    );
     return rows;
   }
   /**
