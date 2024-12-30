@@ -30,13 +30,20 @@ class DishController {
   });
 
   /**
-   * Maneja la solicitud GET /platillos/restaurante/:restauranteId.
+   * Maneja la solicitud GET /dish/restaurant/:restauranteId.
+   * 
+   * Maneja la solicitud GET /dish/restaurant/:restaurantId?category=postre.
    * @param {Object} req - Objeto de solicitud.
    * @param {Object} res - Objeto de respuesta.
    */
   getAllDishesByRestaurant = asyncHandler(async (req, res) => {
     const { restauranteId } = req.params;
-    const dishes = await dishService.getAllByRestaurant(restauranteId);
+    const { category } = req.query; // categoría opcional
+
+    const dishes = await dishService.getAllByRestaurant(
+      restauranteId,
+      category
+    );
     res.status(200).json({
       status: "success",
       data: dishes.map((dish) => dish.toJSON()),

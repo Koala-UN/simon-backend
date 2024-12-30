@@ -43,15 +43,23 @@ class DishRepository extends DishRepositoryInterface {
   /**
    * Encuentra todos los platillos por restaurante.
    * @param {number} restauranteId - ID del restaurante.
+   * @param {string} category - Categoria del platillo.
    * @returns {Promise<Array<Dish>>} Lista de platillos.
    */
-  async findAllByRestaurant(restauranteId) {
-    const query = `
-      SELECT id, nombre, descripcion, precio, existencias,categoria, restaurante_id
+  async findAllByRestaurant(restauranteId, category) {
+    let query = `
+      SELECT id, nombre, descripcion, precio, existencias, categoria, restaurante_id
       FROM platillo
       WHERE restaurante_id = ?
     `;
-    const [rows] = await db.execute(query, [restauranteId]);
+    const params = [restauranteId];
+
+    if (category) {
+      query += " AND categoria = ?";
+      params.push(category);
+    }
+
+    const [rows] = await db.execute(query, params);
     return rows.map((row) => Dish.fromDB(row));
   }
 
@@ -99,7 +107,7 @@ class DishRepository extends DishRepositoryInterface {
       fields.push("restaurante_id = ?");
       values.push(dishData.restauranteId);
     }
-    if(dishData.categoria !== undefined){
+    if (dishData.categoria !== undefined) {
       fields.push("categoria = ?");
       values.push(dishData.categoria);
     }
