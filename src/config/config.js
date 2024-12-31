@@ -11,4 +11,9 @@ module.exports = {
         database: process.env.DB_NAME || 'mydb',
         port: process.env.DB_PORT || 3306,
     },
+    mercadopago: {
+        accessToken: process.env.ACCESS_TOKEN_2||'undefined',
+        publicKey: process.env.PUBLIC_KEY_PAGO_2||'undefined',
+    },
+
 };
