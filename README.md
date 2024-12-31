@@ -14,6 +14,7 @@ Este proyecto utiliza las siguientes dependencias:
 - **`cors`**: Habilita el acceso desde otros orígenes para peticiones HTTP.
 - **`jest`**: Framework de pruebas para JavaScript.
 - **`supertest`**: Biblioteca para probar aplicaciones HTTP.
+- **`mercadopago`**: api de mercadopago.
 ---
 
 ## **Instalación**

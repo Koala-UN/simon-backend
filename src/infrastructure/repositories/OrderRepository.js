@@ -1,6 +1,7 @@
 const pool = require("../../database/connection");
 const OrderRepositoryInterface = require("../../domain/interfaces/order/RepositoryInterface");
 const state = require("../../utils/state");
+const AppError = require('../../domain/exception/AppError')
 /**
  * Clase que interactúa con la base de datos para las operaciones de pedidos.
  */
