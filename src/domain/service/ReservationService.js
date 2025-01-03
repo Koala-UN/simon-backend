@@ -35,7 +35,32 @@ class ReservationService extends ReservationServiceInterface {
     };
     return stateDescription[estado] || "Estado desconocido.";
   }
+  /**
+   * Obtiene la capacidad del restaurante  de reservas
+   * pendientes y reservadas dentro del rango de hora especificado.
+   * @param {number} restauranteId - ID del restaurante.
+   * @param {string} reservationTime - Hora de la reserva (formato HH:mm).
+   * @returns {Promise<Object>}
+   */
+  async getCapacity(restauranteId, reservationTime) {
+    try {
+      const summary = await reservationRepository.getReservationSummary(
+        restauranteId,
+        reservationTime
+      );
+      const totalReserve = parseInt(summary.total_reservas, 10) || 0;
+      const capacity = parseInt(summary.capacidad_reservas, 10) || 0;
 
+      const availableCapacity = capacity - totalReserve;
+      // Ensure availableCapacity is not negative
+      return availableCapacity < 0 ? 0 : availableCapacity;
+    } catch (error) {
+      throw new AppError(
+        `Error al consultar la capacidad de reservas: ${error.message}`,
+        500
+      );
+    }
+  }
   /**
    * Crea una nueva reserva.
    * @param {Object} reservationData - Datos de la reserva.
