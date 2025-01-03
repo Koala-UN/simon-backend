@@ -9,5 +9,5 @@ router.post('/', reservationController.createReservation);
 router.post('/:reservationId/table/:tableId', reservationController.assignTable);
 router.post('/:reservationId/cancel', reservationController.cancelReservation);
 router.get('/restaurant/:restauranteId', reservationController.getAllReservationsByRestaurant);
-
+router.post('/capacity/:restaurantId',reservationController.getCapacity)
 module.exports = router;

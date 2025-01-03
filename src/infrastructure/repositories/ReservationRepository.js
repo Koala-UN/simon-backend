@@ -38,26 +38,26 @@ class ReservationRepository extends ReservationRepositoryInterface {
    * @param {string} reservationTime - Hora de la reserva (formato HH:mm).
    * @returns {Promise<Object>}
    */
-  async getReservationSummary(restauranteId, reservationTime) {
+  async getReservationSummary(restauranteId, reservationTime, reservationDate) {
     const query = `
-    SELECT 
-      r.id AS restaurante_id,
-      r.capacidad_reservas,
-      COALESCE(SUM(res.cantidad), 0) AS total_reservas
-    FROM restaurante r
-    LEFT JOIN reservas res 
-      ON r.id = res.restaurante_id
-      AND res.estado IN ('PENDIENTE', 'RESERVADO')
-      -- Filtra las reservas que están dentro del rango de la hora solicitada
-      AND TIME(res.hora) >= TIME(CONCAT(HOUR(?), ':00:00'))
-      AND TIME(res.hora) < TIME(CONCAT(HOUR(?) + 1, ':00:00'))
-    WHERE 
-      r.id = ?
-    GROUP BY 
-      r.id;
-  `;
-    // Se pasa la hora dos veces (inicio del rango y fin del rango)
+      SELECT 
+        r.id AS restaurante_id,
+        r.capacidad_reservas,
+        COALESCE(SUM(res.cantidad), 0) AS total_reservas
+      FROM restaurante r
+      LEFT JOIN reservas res 
+        ON r.id = res.restaurante_id
+        AND res.estado IN ('PENDIENTE', 'RESERVADO')
+        AND res.fecha = ?
+        AND TIME(res.hora) >= TIME(CONCAT(HOUR(?), ':00:00'))
+        AND TIME(res.hora) < TIME(CONCAT(HOUR(?) + 1, ':00:00'))
+      WHERE 
+        r.id = ?
+      GROUP BY 
+        r.id;
+    `;
     const [rows] = await db.execute(query, [
+      reservationDate,
       reservationTime,
       reservationTime,
       restauranteId,
@@ -81,7 +81,8 @@ class ReservationRepository extends ReservationRepositoryInterface {
     // Verifica la capacidad para la hora específica de la nueva reserva
     const summaryBefore = await this.getReservationSummary(
       reservationData.restauranteId,
-      reservationData.hora
+      reservationData.hora,
+      reservationData.fecha
     );
     // En tu método create, realiza la conversión:
     const totalReservas = parseInt(summaryBefore.total_reservas, 10);
@@ -119,7 +120,8 @@ class ReservationRepository extends ReservationRepositoryInterface {
     // Obtiene el resumen actualizado después de la inserción
     const summaryAfter = await this.getReservationSummary(
       reservationData.restauranteId,
-      reservationData.hora
+      reservationData.hora,
+      reservationData.fecha
     );
 
     return {
@@ -146,7 +148,6 @@ class ReservationRepository extends ReservationRepositoryInterface {
 
     const restauranteId = reservation[0].restaurante_id;
 
-
     const [restaurant] = await db.execute(
       `SELECT capacidad_reservas FROM restaurante WHERE id = ?`,
       [restauranteId]
@@ -158,7 +159,6 @@ class ReservationRepository extends ReservationRepositoryInterface {
         404
       );
     }
-
 
     // Verificar que la mesa pertenece al mismo restaurante
     const [table] = await db.execute(
@@ -183,7 +183,6 @@ class ReservationRepository extends ReservationRepositoryInterface {
       VALUES (?, ?);
     `;
     await db.execute(query, [tableId, reservationId]);
-
 
     // Actualizar el estado de la reserva a RESERVADO
     await db.execute(`UPDATE reservas SET estado = ? WHERE id = ?`, [
@@ -219,12 +218,6 @@ class ReservationRepository extends ReservationRepositoryInterface {
       await connection.execute(
         `DELETE FROM mesa_has_reservas WHERE reservas_id = ?`,
         [reservationId]
-      );
-
-      // Restaurar la capacidad de reservas del restaurante
-      await connection.execute(
-        `UPDATE restaurante SET capacidad_reservas = capacidad_reservas + ? WHERE id = ?`,
-        [cantidadReserva, restauranteId]
       );
 
       // Actualizar el estado de la reserva a CANCELADO

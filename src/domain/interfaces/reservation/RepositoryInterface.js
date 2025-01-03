@@ -23,5 +23,9 @@ class ReservationRepositoryInterface extends RepositoryInterface {
   async findAllByRestaurantId(restaurantId) {
     throw new Error("ERR_METHOD_NOT_IMPLEMENTED");
   }
+  
+  async getReservationSummary(restauranteId, reservationTime) {
+    throw new Error("ERR_METHOD_NOT_IMPLEMENTED");
+  }
 }
 module.exports = ReservationRepositoryInterface;

@@ -63,12 +63,47 @@ class ReservationController {
   getAllReservationsByRestaurant = asyncHandler(async (req, res) => {
     const { restauranteId } = req.params;
     if (!restauranteId) {
-      throw new AppError('El ID del restaurante es requerido', 400);
+      throw new AppError("El ID del restaurante es requerido", 400);
     }
-    const reservations = await reservationService.getAllByRestaurant(restauranteId);
+    const reservations = await reservationService.getAllByRestaurant(
+      restauranteId
+    );
     res.status(200).json({
       status: "success",
       data: reservations,
+    });
+  });
+
+  /**
+   * Obtiene la capacidad del restaurante  de reservas
+   * pendientes y reservadas dentro del rango de hora especificado.
+   * @param {number} restauranteId - ID del restaurante.
+   * @param {string} reservationTime - Hora de la reserva (formato HH:mm).
+   * @returns {Promise<Object>}
+   */
+  getCapacity = asyncHandler(async (req, res) => {
+    const { restaurantId } = req.params;
+    const { time, date } = req.body;
+
+    if (!restaurantId) {
+      throw new AppError("El ID del restaurante es requerido", 400);
+    } else if (!time || !date) {
+      throw new AppError(
+        "La hora y la fecha de la reserva son requeridas",
+        400
+      );
+    }
+
+    const capacity = await reservationService.getCapacity(
+      restaurantId,
+      time,
+      date
+    );
+
+    res.status(200).json({
+      status: "success",
+      data: capacity,
+      message: `La capacidad disponible del restaurante es de ${capacity}`,
     });
   });
 }
