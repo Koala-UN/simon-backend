@@ -2,7 +2,7 @@ const db = require("../../database/connection");
 const RestaurantRepositoryInterface = require("../../domain/interfaces/restaurant/RepositoryInterface");
 const Restaurant = require("../../domain/models/RestaurantModel");
 const Address = require("../../domain/models/AddressModel");
-
+const category = require('../../utils/cagetory')
 class RestaurantRepository extends RestaurantRepositoryInterface {
   /**
    * Crea un nuevo restaurante con su dirección asociada.
@@ -22,7 +22,12 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
         [cityId, addressData.direccion]
       );
       const addressId = addressResult.insertId;
-
+      /*TODO:
+       Tener presente si para los ids de mercadopago y ath0 toca colocar ids por default 
+       para evitar problemas, por el tema de que estamos en desarrollo
+       */
+      restaurantData.categoria =
+        restaurantData.categoria ?? category.Restaurante.CASUAL_DINING;
       // Insertar restaurante
       const [restaurantResult] = await connection.execute(
         `INSERT INTO restaurante (nombre, correo, telefono, estado, id_atenticacion, id_transaccional, capacidad_reservas,categoria,descripcion, direccion_id)

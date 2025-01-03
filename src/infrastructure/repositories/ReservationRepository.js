@@ -2,6 +2,7 @@ const db = require("../../database/connection"); // Tu conexión a la base de da
 const ReservationRepositoryInterface = require("../../domain/interfaces/RepositoryInterface");
 const Reservation = require("../../domain/models/ReservationModel");
 const state = require("../../utils/state");
+const AppError = require("../../domain/exception/AppError");
 class ReservationRepository extends ReservationRepositoryInterface {
   /**
    * Obtiene todas las reservas con sus detalles asociados.
@@ -31,15 +32,73 @@ class ReservationRepository extends ReservationRepositoryInterface {
     return rows.map((row) => Reservation.fromDB(row));
   }
   /**
-   * Crea una nueva reserva en la base de datos.
+   * Obtiene la capacidad del restaurante y la cantidad acumulada de reservas
+   * pendientes y reservadas dentro del rango de hora especificado.
+   * @param {number} restauranteId - ID del restaurante.
+   * @param {string} reservationTime - Hora de la reserva (formato HH:mm).
+   * @returns {Promise<Object>}
+   */
+  async getReservationSummary(restauranteId, reservationTime) {
+    const query = `
+    SELECT 
+      r.id AS restaurante_id,
+      r.capacidad_reservas,
+      COALESCE(SUM(res.cantidad), 0) AS total_reservas
+    FROM restaurante r
+    LEFT JOIN reservas res 
+      ON r.id = res.restaurante_id
+      AND res.estado IN ('PENDIENTE', 'RESERVADO')
+      -- Filtra las reservas que están dentro del rango de la hora solicitada
+      AND TIME(res.hora) >= TIME(CONCAT(HOUR(?), ':00:00'))
+      AND TIME(res.hora) < TIME(CONCAT(HOUR(?) + 1, ':00:00'))
+    WHERE 
+      r.id = ?
+    GROUP BY 
+      r.id;
+  `;
+    // Se pasa la hora dos veces (inicio del rango y fin del rango)
+    const [rows] = await db.execute(query, [
+      reservationTime,
+      reservationTime,
+      restauranteId,
+    ]);
+    if (rows.length === 0) {
+      throw new AppError(
+        `Restaurante con ID ${restauranteId} no encontrado`,
+        404
+      );
+    }
+    return rows[0];
+  }
+
+  /**
+   * Crea una nueva reserva en la base de datos,
+   * validando la capacidad (dentro del rango de hora) y retornando el resumen.
    * @param {Object} reservationData - Datos de la reserva.
-   * @returns {Promise<Reservation>} La reserva creada.
+   * @returns {Promise<{ reservation: Reservation, summary: Object }>}
    */
   async create(reservationData) {
+    // Verifica la capacidad para la hora específica de la nueva reserva
+    const summaryBefore = await this.getReservationSummary(
+      reservationData.restauranteId,
+      reservationData.hora
+    );
+    // En tu método create, realiza la conversión:
+    const totalReservas = parseInt(summaryBefore.total_reservas, 10);
+    const nuevaCantidad = parseInt(reservationData.cantidad, 10);
+    const totalProyectado = totalReservas + nuevaCantidad;
+    if (totalProyectado > summaryBefore.capacidad_reservas) {
+      throw new AppError(
+        `No se puede crear la reserva. Se excede la capacidad del restaurante (Capacidad: ` +
+          `${summaryBefore.capacidad_reservas}, Reservando: ${totalProyectado}).`,
+        400
+      );
+    }
+
     const query = `
-        INSERT INTO reservas (fecha, hora, cantidad, estado, restaurante_id, nombre, telefono, correo, cedula)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
-      `;
+    INSERT INTO reservas (fecha, hora, cantidad, estado, restaurante_id, nombre, telefono, correo, cedula)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+  `;
     const [result] = await db.execute(query, [
       reservationData.fecha,
       reservationData.hora,
@@ -57,9 +116,17 @@ class ReservationRepository extends ReservationRepositoryInterface {
       ...reservationData,
     });
 
-    return newReservation;
-  }
+    // Obtiene el resumen actualizado después de la inserción
+    const summaryAfter = await this.getReservationSummary(
+      reservationData.restauranteId,
+      reservationData.hora
+    );
 
+    return {
+      reservation: newReservation,
+      summary: summaryAfter,
+    };
+  }
   /**
    * Asocia una mesa a una reserva.
    * @param {number} reservationId - ID de la reserva.
@@ -78,7 +145,7 @@ class ReservationRepository extends ReservationRepositoryInterface {
     }
 
     const restauranteId = reservation[0].restaurante_id;
-    const cantidadReserva = reservation[0].cantidad;
+
 
     const [restaurant] = await db.execute(
       `SELECT capacidad_reservas FROM restaurante WHERE id = ?`,
@@ -92,14 +159,6 @@ class ReservationRepository extends ReservationRepositoryInterface {
       );
     }
 
-    const capacidadReservas = restaurant[0].capacidad_reservas;
-
-    if (capacidadReservas < cantidadReserva) {
-      throw new AppError(
-        `No hay capacidad disponible para reservas en el restaurante con ID ${restauranteId}`,
-        400
-      );
-    }
 
     // Verificar que la mesa pertenece al mismo restaurante
     const [table] = await db.execute(
@@ -125,11 +184,6 @@ class ReservationRepository extends ReservationRepositoryInterface {
     `;
     await db.execute(query, [tableId, reservationId]);
 
-    // Restar la capacidad de reservas del restaurante en función de la cantidad de la reserva
-    await db.execute(
-      `UPDATE restaurante SET capacidad_reservas = capacidad_reservas - ? WHERE id = ?`,
-      [cantidadReserva, restauranteId]
-    );
 
     // Actualizar el estado de la reserva a RESERVADO
     await db.execute(`UPDATE reservas SET estado = ? WHERE id = ?`, [
