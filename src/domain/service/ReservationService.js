@@ -50,7 +50,7 @@ class ReservationService extends ReservationServiceInterface {
       const newReservation = await reservationRepository.create(
         reservationData
       );
-      return newReservation.toJSON();
+      return newReservation.reservation;
     } catch (error) {
       throw new AppError(`Error al crear la reserva: ${error.message}`, 500);
     }
