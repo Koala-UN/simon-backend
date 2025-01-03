@@ -83,15 +83,22 @@ class ReservationController {
    */
   getCapacity = asyncHandler(async (req, res) => {
     const { restaurantId } = req.params;
-    const { time } = req.body;
+    const { time, date } = req.body;
 
     if (!restaurantId) {
       throw new AppError("El ID del restaurante es requerido", 400);
-    } else if (!time) {
-      throw new AppError("La hora de la reserva es requerida", 400);
+    } else if (!time || !date) {
+      throw new AppError(
+        "La hora y la fecha de la reserva son requeridas",
+        400
+      );
     }
 
-    const capacity = await reservationService.getCapacity(restaurantId, time);
+    const capacity = await reservationService.getCapacity(
+      restaurantId,
+      time,
+      date
+    );
 
     res.status(200).json({
       status: "success",

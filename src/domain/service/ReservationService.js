@@ -42,17 +42,17 @@ class ReservationService extends ReservationServiceInterface {
    * @param {string} reservationTime - Hora de la reserva (formato HH:mm).
    * @returns {Promise<Object>}
    */
-  async getCapacity(restauranteId, reservationTime) {
+  async getCapacity(restauranteId, reservationTime, reservationDate) {
     try {
       const summary = await reservationRepository.getReservationSummary(
         restauranteId,
-        reservationTime
+        reservationTime,
+        reservationDate
       );
       const totalReserve = parseInt(summary.total_reservas, 10) || 0;
       const capacity = parseInt(summary.capacidad_reservas, 10) || 0;
 
       const availableCapacity = capacity - totalReserve;
-      // Ensure availableCapacity is not negative
       return availableCapacity < 0 ? 0 : availableCapacity;
     } catch (error) {
       throw new AppError(
