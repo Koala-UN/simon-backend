@@ -29,5 +29,27 @@ class TableRepository extends TableRepositoryInterface {
 
     return { id, ...tableData };
   }
+  async findById(id) {
+    const query = "SELECT * FROM mesa WHERE id = ?";
+    const [rows] = await db.execute(query, [id]);
+    if (rows.length === 0) {
+      throw new Error("Mesa no encontrada");
+    }
+    return rows[0];
+  }
+
+  async findAll(restaurante_id) {
+    const query = "SELECT * FROM mesa WHERE restaurante_id = ?";
+    const [rows] = await db.execute(query, [restaurante_id]);
+    return rows;
+  }
+  async delete(id) {
+    const query = "DELETE FROM mesa WHERE id = ?";
+    const [result] = await db.execute(query, [id]);
+    if (result.affectedRows === 0) {
+      throw new NotFoundError("Mesa no encontrada");
+    }
+    return true; // Indica que la mesa fue eliminada correctamente
+  }
 }
 module.exports = TableRepository;

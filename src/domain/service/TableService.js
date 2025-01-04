@@ -1,6 +1,8 @@
 const TableServiceInterface = require("../interfaces/table/ServiceInterface");
 const TableRepository = require("../../infrastructure/repositories/TableRepository");
 const Table = require("../models/TableModel");
+const NotFoundError = require('../exception/NotFoundError')
+const ValidationError = require('../exception/ValidationError')
 class TableService extends TableServiceInterface {
   constructor() {
     super();
@@ -32,6 +34,29 @@ class TableService extends TableServiceInterface {
     const table = new Table({ data: tableData });
     table._validateOnUpdate();
     return await this.tableRepository.update(id, tableData);
+  }
+  async getTableById(id) {
+    return await this.tableRepository.findById(id);
+  }
+
+  async getAllTables(restaurante_id) {
+    if (!restaurante_id) {
+      throw new ValidationError("El ID del restaurante es requerido");
+    }
+    return await this.tableRepository.findAll(restaurante_id);
+  }
+  async deleteTable(id) {
+    if (!id) {
+      throw new ValidationError("El ID de la mesa es requerido");
+    }
+
+    // Verificar si la mesa existe antes de eliminarla
+    const mesaExists = await this.tableRepository.findById(id);
+    if (!mesaExists) {
+      throw new NotFoundError("Mesa no encontrada");
+    }
+
+    return await this.tableRepository.delete(id);
   }
 }
 module.exports = TableService;
