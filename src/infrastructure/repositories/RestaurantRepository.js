@@ -30,7 +30,7 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
         restaurantData.categoria ?? category.Restaurante.CASUAL_DINING;
       // Insertar restaurante
       const [restaurantResult] = await connection.execute(
-        `INSERT INTO restaurante (nombre, correo, telefono, estado, id_atenticacion, id_transaccional, capacidad_reservas,categoria,descripcion, direccion_id)
+        `INSERT INTO restaurante (nombre, correo, telefono, estado, id_autenticacion, id_transaccional, capacidad_reservas,categoria,descripcion, direccion_id)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?,?, ?)`,
         [
           restaurantData.nombre,
@@ -98,7 +98,7 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
       correo: row.correo,
       telefono: row.telefono,
       estado: row.estado,
-      idAtenticacion: row.id_atenticacion,
+      idAtenticacion: row.id_autenticacion,
       idTransaccional: row.id_transaccional,
       capacidadReservas: row.capacidad_reservas,
       direccionId: row.direccion_id,
@@ -171,7 +171,7 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
         correo: row.correo,
         telefono: row.telefono,
         estado: row.estado,
-        idAtenticacion: row.id_atenticacion,
+        idAtenticacion: row.id_autenticacion,
         idTransaccional: row.id_transaccional,
         capacidadReservas: row.capacidad_reservas,
         direccionId: row.direccion_id,

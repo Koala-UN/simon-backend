@@ -41,7 +41,7 @@ class Restaurant {
       correo: row.correo,
       telefono: row.telefono,
       estado: row.estado,
-      idAtenticacion: row.id_atenticacion,
+      idAtenticacion: row.id_autenticacion,
       idTransaccional: row.id_transaccional,
       capacidadReservas: row.capacidad_reservas,
       direccionId: row.direccion_id,

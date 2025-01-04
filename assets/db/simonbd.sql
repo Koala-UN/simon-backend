@@ -103,7 +103,7 @@ CREATE TABLE IF NOT EXISTS `mydb`.`restaurante` (
   `correo` VARCHAR(45) NULL,
   `telefono` VARCHAR(45) NULL,
   `estado` ENUM("ACTIVO", "INACTIVO") NULL,
-  `id_atenticacion` VARCHAR(255) NULL,
+  `id_autenticacion` VARCHAR(255) NULL,
   `id_transaccional` VARCHAR(255) NULL,
   `capacidad_reservas` TINYINT UNSIGNED NULL,
   `direccion_id` INT NOT NULL,
