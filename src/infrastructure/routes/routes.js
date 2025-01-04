@@ -5,6 +5,7 @@ const orderRoutes = require("./OrderRoutes");
 const reservationRoutes = require("./ReservationRoutes");
 const dishRoutes = require("./DishRoutes");
 const restaurantRoutes = require("./RestaurantRoutes");
+const tableRoutes = require('./TableRoutes');
 const router = express.Router();
 
 // Agrupa las rutas
@@ -14,4 +15,5 @@ router.use("/order", orderRoutes);
 router.use("/reserve",reservationRoutes );
 router.use("/dish", dishRoutes);
 router.use("/restaurant", restaurantRoutes);
+router.use('/table',tableRoutes);
 module.exports = router;
