@@ -9,7 +9,7 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
   /*  ✅ Función getUrl(url) que retorna una URL basada en la categoría de restaurante */
   static getUrl(categoryKey) {
     return (
-      categoryUrlMap[categoryKey] || "https://example.com/images/default.jpg"
+      categoryUrlMap[categoryKey] ?? categoryUrlMap.Cafetería
     );
   }
   /**
