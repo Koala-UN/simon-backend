@@ -3,15 +3,9 @@ const RestaurantRepositoryInterface = require("../../domain/interfaces/restauran
 const Restaurant = require("../../domain/models/RestaurantModel");
 const Address = require("../../domain/models/AddressModel");
 const category = require("../../utils/cagetory");
-const categoryUrlMap = require('../../../assets/json/restaurantMap.json');
+const getImgUrl = require("../../utils/getImgUrl");
 
 class RestaurantRepository extends RestaurantRepositoryInterface {
-  /*  ✅ Función getUrl(url) que retorna una URL basada en la categoría de restaurante */
-  static getUrl(categoryKey) {
-    return (
-      categoryUrlMap[categoryKey] ?? categoryUrlMap.Cafetería
-    );
-  }
   /**
    * Crea un nuevo restaurante con su dirección asociada.
    * @param {Object} restaurantData - Datos del restaurante.
@@ -113,7 +107,7 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
       categoria: row.categoria,
       descripcion: row.descripcion,
       address: address,
-      imageUrl: RestaurantRepository.getUrl(row.categoria),
+      imageUrl: getImgUrl(row.categoria, (type = "restaurant")),
     });
   }
 
@@ -187,7 +181,7 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
         categoria: row.categoria,
         descripcion: row.descripcion,
         address,
-        imageUrl: RestaurantRepository.getUrl(row.categoria),
+        imageUrl: getImgUrl(row.categoria, (type = "restaurant")),
       });
     });
   }
