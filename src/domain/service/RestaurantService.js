@@ -3,6 +3,11 @@ const category = require("../../utils/cagetory");
 const AppError = require("../exception/AppError");
 const RestaurantServiceInterface = require("../interfaces/restaurant/ServiceInterface");
 
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const config = require("../../config/config");
+const { sendVerificationEmail, sendEmail } = require('../../utils/email');
+
 class RestaurantService extends RestaurantServiceInterface {
   /**
    * Crea un nuevo restaurante con su dirección asociada.
@@ -23,6 +28,48 @@ class RestaurantService extends RestaurantServiceInterface {
     );
   }
 
+  async register(restaurantData, addressData, cityId) {
+
+    // Validar los datos del restaurante y la dirección
+    //this._validateRestaurantData(restaurantData);
+    this._validateAddressData(addressData);
+
+    // validar que el correo no exista
+    const existingRestaurant = await restaurantRepository.findByEmail(restaurantData.correo);
+    if (existingRestaurant) {
+      throw new AppError('El correo ya está en uso');
+    }
+
+    const hashedPassword = await bcrypt.hash(restaurantData.contrasena, config.auth.bcryptSaltRounds);
+    restaurantData.contrasena = hashedPassword;
+    restaurantData.estado = 'NO_VERIFICADO'; // Estado inicial
+    const newRestaurant = await restaurantRepository._create(restaurantData, addressData, cityId);
+    const verificationToken = jwt.sign({ id: newRestaurant.id, correo: newRestaurant.correo }, config.auth.jwtSecret, { expiresIn: config.auth.jwtExpiration });
+    console.log("vamos a enviar el correo: ", newRestaurant.correo, verificationToken);
+    await sendVerificationEmail(newRestaurant.correo, verificationToken);
+    return newRestaurant;
+  }
+
+  async login(data) {
+    const user = await restaurantRepository.findByEmail(data.correo);
+    if (!user) {
+      throw new Error('Correo o contraseña incorrectos');
+    }
+
+    const isPasswordValid = await bcrypt.compare(data.contrasena, user.contrasena);
+    if (!isPasswordValid) {
+      throw new Error('Correo o contraseña incorrectos');
+    }
+
+    const token = jwt.sign({ id: user.id, correo: user.correo }, config.auth.jwtSecret, { expiresIn: config.auth.jwtExpiration });
+    return { token };
+  }
+  verifyEmail = async (id) => {
+    await restaurantRepository.updateRestaurant(id, { estado: 'ACTIVO' });
+  }
+
+
+
   /**
    * Valida los datos del restaurante.
    * @param {Object} restaurantData - Datos del restaurante.
@@ -34,7 +81,7 @@ class RestaurantService extends RestaurantServiceInterface {
       "correo",
       "telefono",
       "estado",
-      "idAtenticacion",
+      "idAutenticacion",
       "idTransaccional",
       "capacidadReservas",
     ];
@@ -146,6 +193,76 @@ class RestaurantService extends RestaurantServiceInterface {
       restaurantUpdates
     );
     return await restaurantRepository.findById(restaurantId);
+  }
+
+
+  /**
+   * Cambia la contraseña de un restaurante.
+   * @param {number} id - ID del restaurante.
+   * @param {string} oldPassword - Contraseña antigua.
+   * @param {string} newPassword - Contraseña nueva.
+   * @returns {Promise<void>}
+   */
+  async changePassword(correo, oldPassword, newPassword) {
+    if (!correo || !oldPassword || !newPassword) {
+      throw new AppError("Todos los campos son obligatorios", 400);
+    }
+
+    const restaurant = await restaurantRepository.findByEmail(correo);
+    if (!restaurant) {
+      throw new AppError("Restaurante no encontrado", 404);
+    }
+    console.log("***contraseña antigua: ", oldPassword, " contraseña nueva: ", newPassword, " restaurante: ", restaurant.contrasena);
+
+    const isPasswordValid = await bcrypt.compare(oldPassword, restaurant.contrasena);
+    if (!isPasswordValid) {
+      throw new AppError("La contraseña antigua es incorrecta", 400);
+    }
+
+    const hashedNewPassword = await bcrypt.hash(newPassword, config.auth.bcryptSaltRounds);
+    await this.updateRestaurant(restaurant.id, { contrasena: hashedNewPassword });
+  }
+
+  /**
+   * Recupera la contraseña de un restaurante, de hecho cambia la contraseña por una provisional y se la envía al correo.
+   * @param {string} email - Correo electrónico del restaurante.
+   * @returns {Promise<void>}
+   */
+  async recoverPassword(email) {
+    if (!email) {
+      throw new AppError("El correo electrónico es requerido", 400);
+    }
+
+    const restaurant = await restaurantRepository.findByEmail(email);
+    if (!restaurant) {
+      throw new AppError("Restaurante no encontrado", 404);
+    }
+
+    const newPassword = this._generateSecurePassword();
+    const hashedNewPassword = await bcrypt.hash(newPassword, config.auth.bcryptSaltRounds);
+    await this.updateRestaurant(restaurant.id, { contrasena: hashedNewPassword });
+
+    const mailData = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Recuperación de contraseña',
+      html: `<p>Se le ha cambiado su contraseña a una provisional para que pueda acceder, su nueva contraseña es: ${newPassword}</p>`
+    };
+
+    await sendEmail(mailData.to, mailData.subject, mailData.html);
+  }
+
+  /**
+   * Genera una contraseña segura.
+   * @returns {string} La contraseña generada.
+   */
+  _generateSecurePassword(length = 12) {
+    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&*";
+    let password = "";
+    for (let i = 0, n = charset.length; i < length; ++i) {
+      password += charset.charAt(Math.floor(Math.random() * n));
+    }
+    return password;
   }
 }
 

@@ -15,5 +15,13 @@ module.exports = {
         accessToken: process.env.ACCESS_TOKEN_2||'undefined',
         publicKey: process.env.PUBLIC_KEY_PAGO_2||'undefined',
     },
+    auth: {
+        jwtSecret: process.env.JWT_SECRET,
+        jwtExpiration: process.env.JWT_EXPIRATION,
+        bcryptSaltRounds: parseInt(process.env.BCRYPT_SALT_ROUNDS),
+        googleClientID: process.env.GOOGLE_CLIENT_ID,
+        googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        googleCallbackURL: process.env.GOOGLE_CALLBACK_URL
+    }
 
 };
