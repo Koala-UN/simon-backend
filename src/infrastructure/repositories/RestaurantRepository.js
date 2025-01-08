@@ -3,7 +3,7 @@ const RestaurantRepositoryInterface = require("../../domain/interfaces/restauran
 const Restaurant = require("../../domain/models/RestaurantModel");
 const Address = require("../../domain/models/AddressModel");
 const category = require("../../utils/cagetory");
-const categoryUrlMap = require('../../../assets/json/categoryMap.json');
+const categoryUrlMap = require('../../../assets/json/restaurantMap.json');
 
 class RestaurantRepository extends RestaurantRepositoryInterface {
   /*  ✅ Función getUrl(url) que retorna una URL basada en la categoría de restaurante */
