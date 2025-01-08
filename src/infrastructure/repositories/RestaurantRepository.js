@@ -107,7 +107,7 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
       categoria: row.categoria,
       descripcion: row.descripcion,
       address: address,
-      imageUrl: getImgUrl(row.categoria, (type = "restaurant")),
+      imageUrl: getImgUrl(row.categoria, "restaurant"),
     });
   }
 
@@ -181,7 +181,7 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
         categoria: row.categoria,
         descripcion: row.descripcion,
         address,
-        imageUrl: getImgUrl(row.categoria, (type = "restaurant")),
+        imageUrl: getImgUrl(row.categoria, "restaurant"),
       });
     });
   }
