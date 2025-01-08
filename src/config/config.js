@@ -15,5 +15,9 @@ module.exports = {
         accessToken: process.env.ACCESS_TOKEN_2||'undefined',
         publicKey: process.env.PUBLIC_KEY_PAGO_2||'undefined',
     },
-
+    cloudinary: {
+        cloud_name: process.env.CLOUD_NAME || 'undefined',
+        api_key: process.env.API_KEY || 'undefined',
+        api_secret: process.env.API_SECRET || 'undefined',
+    },
 };
