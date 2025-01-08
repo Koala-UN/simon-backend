@@ -1,0 +1,17 @@
+{
+  "Cocina Rápida": "https://example.com/images/fast_food.jpg",
+  "Casual Dining": "https://example.com/images/casual_dining.jpg",
+  "Fine Dining": "https://example.com/images/fine_dining.jpg",
+  "Cafetería": "https://example.com/images/cafeteria.jpg",
+  "Bar y Grill": "https://example.com/images/bar_and_grill.jpg",
+  "Pizzería": "https://example.com/images/pizzeria.jpg",
+  "Marisquería": "https://example.com/images/marisqueria.jpg",
+  "Buffet": "https://example.com/images/buffet.jpg",
+  "Restaurante Temático": "https://example.com/images/themed_restaurant.jpg",
+  "Food Truck": "https://example.com/images/food_truck.jpg",
+  "Vegetariano/Vegano": "https://example.com/images/vegetarian_vegan.jpg",
+  "Asador/Parrilla": "https://example.com/images/grill.jpg",
+  "Panadería y Repostería": "https://example.com/images/bakery.jpg",
+  "Cocina Internacional": "https://example.com/images/international_cuisine.jpg",
+  "Cocina Regional": "https://example.com/images/regional_cuisine.jpg"
+}
