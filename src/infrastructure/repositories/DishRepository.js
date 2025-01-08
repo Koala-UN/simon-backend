@@ -1,7 +1,7 @@
 const db = require("../../database/connection");
 const DishRepositoryInterface = require("../../domain/interfaces/dish/RepositoryInterface");
 const Dish = require("../../domain/models/DishModel");
-
+const getImgUrl = require("../../utils/getImgUrl");
 class DishRepository extends DishRepositoryInterface {
   /**
    * Crea un nuevo platillo.
@@ -60,7 +60,20 @@ class DishRepository extends DishRepositoryInterface {
     }
 
     const [rows] = await db.execute(query, params);
-    return rows.map((row) => Dish.fromDB(row));
+
+    return rows.map(
+      (row) =>
+        new Dish({
+          id: row.id,
+          nombre: row.nombre,
+          descripcion: row.descripcion,
+          precio: row.precio,
+          existencias: row.existencias,
+          restauranteId: row.restaurante_id,
+          categoria: row.categoria,
+          imageUrl: getImgUrl(row.categoria, "dish"),
+        })
+    );
   }
 
   /**
@@ -74,7 +87,19 @@ class DishRepository extends DishRepositoryInterface {
     if (rows.length === 0) {
       throw new AppError(`Platillo con ID ${dishId} no encontrado`, 404);
     }
-    return Dish.fromDB(rows[0]);
+
+    const row = rows[0];
+
+    return new Dish({
+      id: row.id,
+      nombre: row.nombre,
+      descripcion: row.descripcion,
+      precio: row.precio,
+      existencias: row.existencias,
+      restauranteId: row.restaurante_id,
+      categoria: row.categoria,
+      imageUrl: getImgUrl(row.categoria, "dish"),
+    });
   }
 
   /**

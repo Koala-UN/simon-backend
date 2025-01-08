@@ -20,7 +20,7 @@ class Dish {
     this.existencias = data.existencias || null;
     this.restauranteId = data.restauranteId || null;
     this.categoria = data.categoria || null;
-
+    this.imageUrl = data.imageUrl || null;
     this.validateCategory();
   }
   validateCategory() {
@@ -48,6 +48,7 @@ class Dish {
       existencias: row.existencias,
       restauranteId: row.restaurante_id,
       categoria: row.categoria,
+      imageUrl: row.imageUrl,
     });
   }
 
@@ -64,6 +65,7 @@ class Dish {
       existencias: this.existencias,
       restauranteId: this.restauranteId,
       categoria: this.categoria,
+      imageUrl: this.imageUrl,
     };
   }
 }
