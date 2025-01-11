@@ -2,7 +2,9 @@ const db = require("../../database/connection");
 const RestaurantRepositoryInterface = require("../../domain/interfaces/restaurant/RepositoryInterface");
 const Restaurant = require("../../domain/models/RestaurantModel");
 const Address = require("../../domain/models/AddressModel");
-const category = require('../../utils/cagetory')
+const category = require("../../utils/cagetory");
+const getImgUrl = require("../../utils/getImgUrl");
+
 const AppError = require("../../domain/exception/AppError");
 
 class RestaurantRepository extends RestaurantRepositoryInterface {
@@ -177,6 +179,7 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
       categoria: row.categoria,
       descripcion: row.descripcion,
       address: address,
+      imageUrl: getImgUrl(row.categoria, "restaurant"),
     });
   }
 
@@ -250,6 +253,7 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
         categoria: row.categoria,
         descripcion: row.descripcion,
         address,
+        imageUrl: getImgUrl(row.categoria, "restaurant"),
       });
     });
   }

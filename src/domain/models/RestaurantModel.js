@@ -16,6 +16,7 @@ class Restaurant {
     this.address = data.address ? new Address(data.address) : null;
     this.categoria = data.categoria || null;
     this.descripcion = data.descripcion || null;
+    this.imageUrl = data.imageUrl || null;
     this.validateCategory();
   }
   validateCategory() {
@@ -48,6 +49,7 @@ class Restaurant {
       categoria: row.categoria,
       descripcion: row.descripcion,
       address: row.address ? Address.fromDB(row.address) : null,
+      imageUrl: row.imageUrl,
     });
   }
 
@@ -69,6 +71,7 @@ class Restaurant {
       categoria: this.categoria,
       descripcion: this.descripcion,
       address: this.address ? this.address.toJSON() : null,
+      imageUrl: this.imageUrl
     };
   }
 }
