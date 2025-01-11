@@ -18,7 +18,7 @@ INSERT INTO mydb.direccion (ciudad_id, direccion) VALUES (3, 'Carrera 56 #78-90'
 
 -- Inserts for restaurante
 INSERT INTO `mydb`.`restaurante` 
-(`nombre`, `correo`, `telefono`, `estado`, `id_atenticacion`, `id_transaccional`, `capacidad_reservas`, `direccion_id`, `descripcion`, `categoria`) 
+(`nombre`, `correo`, `telefono`, `estado`, `id_autenticacion`, `id_transaccional`, `capacidad_reservas`, `direccion_id`, `descripcion`, `categoria`) 
 VALUES 
 ('Restaurante Bogotá', 'bogota@restaurante.com', '1234567890', 'ACTIVO', 'auth123', 'trans123', 50, 1, 'Restaurante especializado en comida típica colombiana', 'Cocina Regional'),
 ('Restaurante Cúcuta', 'cucuta@restaurante.com', '0987654321', 'ACTIVO', 'auth456', 'trans456', 30, 2, 'Comida rápida con un toque gourmet', 'Comida Rápida'),

@@ -2,8 +2,16 @@ const restaurantRepository = require("../../infrastructure/repositories/Restaura
 const category = require("../../utils/cagetory");
 const AppError = require("../exception/AppError");
 const RestaurantServiceInterface = require("../interfaces/restaurant/ServiceInterface");
+const bcrypt = require('bcrypt');
+const config = require("../../config/config");
+const authConfig = require('../../config/authConfig');
+const JWT = require('../../utils/jwt');
+const { sendVerificationEmail, sendEmail } = require('../../utils/email');
 
 class RestaurantService extends RestaurantServiceInterface {
+
+
+
   /**
    * Crea un nuevo restaurante con su dirección asociada.
    * @param {Object} restaurantData - Datos del restaurante.
@@ -23,6 +31,48 @@ class RestaurantService extends RestaurantServiceInterface {
     );
   }
 
+  async register(restaurantData, addressData, cityId) {
+
+    // Validar los datos del restaurante y la dirección
+    //this._validateRestaurantData(restaurantData);
+    this._validateAddressData(addressData);
+
+    // validar que el correo no exista
+    const existingRestaurant = await this.findByEmail(restaurantData.correo);
+    if (existingRestaurant) {
+      throw new AppError('El correo ya está en uso');
+    }
+
+    const hashedPassword = await bcrypt.hash(restaurantData.contrasena, config.auth.bcryptSaltRounds);
+    restaurantData.contrasena = hashedPassword;
+    restaurantData.estado = 'NO_VERIFICADO'; // Estado inicial
+    const newRestaurant = await restaurantRepository._create(restaurantData, addressData, cityId);
+    const verificationToken = config.auth.createJWT({ id: newRestaurant.id, correo: newRestaurant.correo });
+    console.log("vamos a enviar el correo: ", newRestaurant.correo, verificationToken);
+    await sendVerificationEmail(newRestaurant.correo, verificationToken);
+    return newRestaurant;
+  }
+
+  async login(data) {
+    const user = await this.findByEmail(data.correo);
+    if (!user) {
+      throw new Error('Correo o contraseña incorrectos');
+    }
+
+    const isPasswordValid = await bcrypt.compare(data.contrasena, user.contrasena);
+    if (!isPasswordValid) {
+      throw new Error('Correo o contraseña incorrectos');
+    }
+
+    const token = JWT.createJWT({ id: user.id, correo: user.correo });
+    return { token };
+  }
+  verifyEmail = async (id) => {
+    await restaurantRepository.updateRestaurant(id, { estado: 'ACTIVO' });
+  }
+
+
+
   /**
    * Valida los datos del restaurante.
    * @param {Object} restaurantData - Datos del restaurante.
@@ -34,7 +84,7 @@ class RestaurantService extends RestaurantServiceInterface {
       "correo",
       "telefono",
       "estado",
-      "idAtenticacion",
+      "idAutenticacion",
       "idTransaccional",
       "capacidadReservas",
     ];
@@ -121,7 +171,7 @@ class RestaurantService extends RestaurantServiceInterface {
    * @param {Object} updates - Objeto con los campos a actualizar.
    * @returns {Promise<Restaurant>} El restaurante actualizado.
    */
-  async updateRestaurant(restaurantId, updates) {
+  static async updateRestaurant(restaurantId, updates) {
     if (!restaurantId) {
       throw new AppError("El ID del restaurante es requerido", 400);
     }
@@ -147,6 +197,127 @@ class RestaurantService extends RestaurantServiceInterface {
     );
     return await restaurantRepository.findById(restaurantId);
   }
+
+
+  /**
+   * Cambia la contraseña de un restaurante.
+   * @param {number} id - ID del restaurante.
+   * @param {string} oldPassword - Contraseña antigua.
+   * @param {string} newPassword - Contraseña nueva.
+   * @returns {Promise<void>}
+   */
+  async changePassword(correo, oldPassword, newPassword) {
+    if (!correo || !oldPassword || !newPassword) {
+      throw new AppError("Todos los campos son obligatorios", 400);
+    }
+
+    const restaurant = await this.findByEmail(correo);
+    if (!restaurant) {
+      throw new AppError("Restaurante no encontrado", 404);
+    }
+    console.log("***contraseña antigua: ", oldPassword, " contraseña nueva: ", newPassword, " restaurante: ", restaurant.contrasena);
+
+    const isPasswordValid = await bcrypt.compare(oldPassword, restaurant.contrasena);
+    if (!isPasswordValid) {
+      throw new AppError("La contraseña antigua es incorrecta", 400);
+    }
+
+    const hashedNewPassword = await bcrypt.hash(newPassword, config.auth.bcryptSaltRounds);
+    await this.updateRestaurant(restaurant.id, { contrasena: hashedNewPassword });
+  }
+
+  /**
+   * Recupera la contraseña de un restaurante, de hecho cambia la contraseña por una provisional y se la envía al correo.
+   * @param {string} email - Correo electrónico del restaurante.
+   * @returns {Promise<void>}
+   */
+  async recoverPassword(email) {
+    if (!email) {
+      throw new AppError("El correo electrónico es requerido", 400);
+    }
+
+    const restaurant = await this.findByEmail(email);
+    if (!restaurant) {
+      throw new AppError("Restaurante no encontrado", 404);
+    }
+
+    const newPassword = this._generateSecurePassword();
+    const hashedNewPassword = await bcrypt.hash(newPassword, config.auth.bcryptSaltRounds);
+    await this.updateRestaurant(restaurant.id, { contrasena: hashedNewPassword });
+
+    const mailData = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Recuperación de contraseña',
+      html: `<p>Se le ha cambiado su contraseña a una provisional para que pueda acceder, su nueva contraseña es: ${newPassword}</p>`
+    };
+
+    await sendEmail(mailData.to, mailData.subject, mailData.html);
+  }
+
+  /**
+   * Genera una contraseña segura.
+   * @returns {string} La contraseña generada.
+   */
+  _generateSecurePassword(length = 12) {
+    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&*";
+    let password = "";
+    for (let i = 0, n = charset.length; i < length; ++i) {
+      password += charset.charAt(Math.floor(Math.random() * n));
+    }
+    return password;
+  }
+
+  async hasPassword(correo){
+    return this.findByEmail(correo).then(restaurant => {
+      if(!restaurant){
+        return false;
+      }
+      return restaurant.contrasena ? true : false
+  });
+  }
+
+  async createWithGoogle(profile) {
+
+    const restaurantData = {
+      nombre: profile.displayName,
+      correo: profile.emails[0].value,
+      idAutenticacion: profile.id,
+      estado: "NO_VERIFICADO",
+      //poner los demas campos en null, no pueden ser undefined
+      telefono: null,
+      idTransaccional: null,
+      capacidadReservas: null,
+      categoria: null,
+      descripcion: null,
+      contrasena: null,
+      
+    };
+
+    const addressData = {
+      direccion: "Establecer dirección de " + profile.displayName,
+    };
+
+    const cityId = 1; // ID de la ciudad por defecto
+
+    //ahora se usa el repository y se envie correo de verificacion
+    const newRestaurant = await restaurantRepository._create(restaurantData, addressData, cityId);
+    const verificationToken = config.auth.createJWT({ id: newRestaurant.id, correo: newRestaurant.correo });
+    await sendVerificationEmail(newRestaurant.correo, verificationToken);
+    return newRestaurant;
+  }
+
+   async findByGoogleId(id) {
+    return await restaurantRepository.findByGoogleId(id);
+  }
+
+
+   async findByEmail(email) {
+    return await restaurantRepository.findByEmail(email);
+  }
 }
 
+
 module.exports = new RestaurantService();
+
+
