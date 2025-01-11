@@ -1,6 +1,6 @@
 const restaurantService = require("../../domain/service/RestaurantService");
 const asyncHandler = require("../middleware/asyncHandler");
-const JWT = require("../../utils/jwt");
+
 class RestaurantController {
   /**
    * Maneja la solicitud POST /restaurantes.
@@ -95,103 +95,6 @@ class RestaurantController {
       data: updatedRestaurant.toJSON(),
     });
   });
-
-
-  /**
-   * Maneja la solicitud POST /restaurantes/register.
-   * @param {Object} req - Objeto de solicitud.
-   * @param {Object} res - Objeto de respuesta.
-   */
-  registerRestaurant = asyncHandler(async (req, res) => {
-    const { restaurantData, addressData, cityId } = req.body;
-    restaurantData.addressData = addressData;
-    restaurantData.cityId = cityId;
-    const newRestaurant = await restaurantService.register(restaurantData, addressData, cityId);
-    res.status(201).json({
-      status: "success",
-      data: newRestaurant.toJSON(),
-    });
-  });
-
-  /**
-   * Maneja la solicitud POST /restaurantes/login.
-   * @param {Object} req - Objeto de solicitud.
-   * @param {Object} res - Objeto de respuesta.
-   */
-  loginRestaurant = asyncHandler(async (req, res) => {
-    if (process.env.NODE_ENV === "development") {
-      console.log(req.body);
-    }
-    if (!req.body.correo || !req.body.contrasena) {
-      res.status(400).json({
-        status: "error",
-        message: "El correo electrónico y la contraseña son requeridos",
-        data: req.body,
-      });
-    }
-    const result = await restaurantService.login(req.body);
-    JWT.createCookie(res,"token", result.token);
-    res.status(200).json({
-      status: "success",
-    });
-  });
-
-  /**
-   * Maneja la solicitud POST /restaurantes/logout.
-   * @param {Object} req - Objeto de solicitud.
-   * @param {Object} res - Objeto de respuesta.
-   */
-  logoutRestaurant = asyncHandler(async (req, res) => {
-    res.clearCookie('token');
-    res.status(200).json({
-      status: "success",
-    }); 
-  }
-  );
-
-  verifyEmail = asyncHandler(async (req, res) => {
-    const { token } = req.query;
-    console.log('token=============: ', token);
-    console.log("query", req.query);
-  
-    try {
-      const decoded = JWT.verifyJWT(token);
-      console.log('decoded=============: ', decoded);
-      await restaurantService.verifyEmail(decoded.id);
-      res.status(200).json({ status: 'success', message: 'Correo verificado exitosamente' });
-    } catch (error) {
-      res.status(400).json({ status: 'error', message: 'Token de verificación no válido o expirado' });
-    }
-  });
-
-  changePassword = asyncHandler(async (req, res) => {
-    const { oldPassword, newPassword } = req.body;
-    const { correo } = req.user;
-    await restaurantService.changePassword(correo, oldPassword, newPassword);
-    res.status(200).json({ status: 'success', message: 'Contraseña actualizada exitosamente' });
-  });
-
-  recoverPassword = asyncHandler(async (req, res) => {
-    const { correo } = req.body;
-    await restaurantService.recoverPassword(correo);
-    res.status(200).json({ status: 'success', message: 'Correo de recuperación de contraseña enviado exitosamente' });
-  });
-
-
-// crear un nuevo método para verificar si el usuario tiene una contraseña: hasPassword
-
-  hasPassword = asyncHandler(async (req, res) => {
-    const { correo } = req.body;
-    const hasPassword = await restaurantService.hasPassword(correo);
-    res.status(200).json({ status: 'success', data: { hasPassword } });
-  });
-
-  googleCallback = asyncHandler(async (req, res) => {
-    const { id, correo } = req.user;
-    JWT.createJWTCookie(res, { id, correo });
-    res.redirect(`${process.env.FRONTEND_URL}/`); // Redirigir al frontend usando la variable de entorno
-  });
-  
 }
 
 module.exports = new RestaurantController();

@@ -5,8 +5,6 @@ const Address = require("../../domain/models/AddressModel");
 const category = require("../../utils/cagetory");
 const getImgUrl = require("../../utils/getImgUrl");
 
-const AppError = require("../../domain/exception/AppError");
-
 class RestaurantRepository extends RestaurantRepositoryInterface {
   /**
    * Crea un nuevo restaurante con su dirección asociada.
@@ -34,14 +32,14 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
         restaurantData.categoria ?? category.Restaurante.CASUAL_DINING;
       // Insertar restaurante
       const [restaurantResult] = await connection.execute(
-        `INSERT INTO restaurante (nombre, correo, telefono, estado, id_autenticacion, id_transaccional, capacidad_reservas,categoria,descripcion, direccion_id)
+        `INSERT INTO restaurante (nombre, correo, telefono, estado, id_atenticacion, id_transaccional, capacidad_reservas,categoria,descripcion, direccion_id)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?,?, ?)`,
         [
           restaurantData.nombre,
           restaurantData.correo,
           restaurantData.telefono,
           restaurantData.estado,
-          restaurantData.idAutenticacion,
+          restaurantData.idAtenticacion,
           restaurantData.idTransaccional,
           restaurantData.capacidadReservas,
           restaurantData.categoria,
@@ -71,76 +69,6 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
       connection.release();
     }
   }
-
-  /**
-   * Encuentra un restaurante por su correo.
-   * @param {string} correo - correo del restaurante.
-   * @returns {Promise<rows[0]>} El restaurante encontrado.
-   */
-  async findByEmail(correo) {
-    const query = `SELECT * FROM restaurante WHERE correo = ?`;
-    const [rows] = await db.execute(query, [correo]);
-    return rows[0];
-  }
-
-  async _create(restaurantData, addressData, cityId) {
-    const connection = await db.getConnection();
-    try {
-      await connection.beginTransaction();
-
-      // Insertar dirección
-      const [addressResult] = await connection.execute(
-        `INSERT INTO direccion (ciudad_id, direccion) VALUES (?, ?)`,
-        [cityId, addressData.direccion]
-      );
-      const addressId = addressResult.insertId;
-      /*TODO:
-       Tener presente si para los ids de mercadopago y ath0 toca colocar ids por default 
-       para evitar problemas, por el tema de que estamos en desarrollo
-       */
-      restaurantData.categoria =
-        restaurantData.categoria ?? category.Restaurante.CASUAL_DINING;
-      // Insertar restaurante
-      const [restaurantResult] = await connection.execute(
-        `INSERT INTO restaurante (nombre, correo, contrasena, telefono, estado, id_autenticacion, id_transaccional, capacidad_reservas,categoria,descripcion, direccion_id)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          restaurantData.nombre,
-          restaurantData.correo,
-          restaurantData.contrasena || null,
-          restaurantData.telefono,
-          restaurantData.estado,
-          restaurantData.idAutenticacion || null,
-          restaurantData.idTransaccional,
-          restaurantData.capacidadReservas,
-          restaurantData.categoria,
-          restaurantData.descripcion,
-          addressId,
-        ]
-      );
-
-      await connection.commit();
-
-      const address = new Address({
-        id: addressId,
-        ciudadId: cityId,
-        direccion: addressData.direccion,
-      });
-
-      return new Restaurant({
-        id: restaurantResult.insertId,
-        ...restaurantData,
-        direccionId: addressId,
-        address: address,
-      });
-    } catch (error) {
-      await connection.rollback();
-      throw error;
-    } finally {
-      connection.release();
-    }
-  }
-
 
   /**
    * Encuentra un restaurante por su ID.
@@ -172,7 +100,7 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
       correo: row.correo,
       telefono: row.telefono,
       estado: row.estado,
-      idAutenticacion: row.id_autenticacion,
+      idAtenticacion: row.id_atenticacion,
       idTransaccional: row.id_transaccional,
       capacidadReservas: row.capacidad_reservas,
       direccionId: row.direccion_id,
@@ -246,7 +174,7 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
         correo: row.correo,
         telefono: row.telefono,
         estado: row.estado,
-        idAutenticacion: row.id_autenticacion,
+        idAtenticacion: row.id_atenticacion,
         idTransaccional: row.id_transaccional,
         capacidadReservas: row.capacidad_reservas,
         direccionId: row.direccion_id,
@@ -311,11 +239,6 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
       fields.push("correo = ?");
       values.push(updates.correo);
     }
-    if(updates.contrasena){
-      fields.push("contrasena = ?");
-      values.push(updates.contrasena);
-    }
-
     if (updates.telefono) {
       fields.push("telefono = ?");
       values.push(updates.telefono);
@@ -339,11 +262,6 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
     if (updates.descripcion) {
       fields.push("descripcion = ?");
       values.push(updates.descripcion);
-    }
-
-    if(updates.idAutenticacion){
-      fields.push("id_autenticacion = ?");
-      values.push(updates.idAutenticacion);
     }
 
     if (fields.length === 0) {
@@ -381,26 +299,6 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
 
     await db.execute(query, values);
   }
-
-  // implementar findByGoogleId, teniendo en cuenta que el id de google se almacena en la tabla restaurante en el campo id_autenticacion
-
-  async findByGoogleId(googleId) {
-    const query = `SELECT * FROM restaurante WHERE id_autenticacion = ?`;
-    const [rows] = await db.execute(query, [googleId]);
-    return rows[0];
-  }
-
-
-
-
-
-
-
-
-
-
-
-
 }
 
 module.exports = new RestaurantRepository();
