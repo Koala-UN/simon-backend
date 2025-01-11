@@ -1,7 +1,7 @@
 const transporter = require('../config/emailConfig');
-
+const config = require('../config/config');
 const sendVerificationEmail = async (email, token) => {
-  const verificationUrl = `${process.env.API_URL}/restaurant/verify-email?token=${token}`;
+  const verificationUrl = `${config.app.BACKEND_URL}/api/restaurant/verify-email?token=${token}`;
   
   const data = {
     from: process.env.EMAIL_USER,

@@ -2,13 +2,16 @@ const restaurantRepository = require("../../infrastructure/repositories/Restaura
 const category = require("../../utils/cagetory");
 const AppError = require("../exception/AppError");
 const RestaurantServiceInterface = require("../interfaces/restaurant/ServiceInterface");
-
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
 const config = require("../../config/config");
+const authConfig = require('../../config/authConfig');
+const JWT = require('../../utils/jwt');
 const { sendVerificationEmail, sendEmail } = require('../../utils/email');
 
 class RestaurantService extends RestaurantServiceInterface {
+
+
+
   /**
    * Crea un nuevo restaurante con su dirección asociada.
    * @param {Object} restaurantData - Datos del restaurante.
@@ -35,7 +38,7 @@ class RestaurantService extends RestaurantServiceInterface {
     this._validateAddressData(addressData);
 
     // validar que el correo no exista
-    const existingRestaurant = await restaurantRepository.findByEmail(restaurantData.correo);
+    const existingRestaurant = await this.findByEmail(restaurantData.correo);
     if (existingRestaurant) {
       throw new AppError('El correo ya está en uso');
     }
@@ -44,14 +47,14 @@ class RestaurantService extends RestaurantServiceInterface {
     restaurantData.contrasena = hashedPassword;
     restaurantData.estado = 'NO_VERIFICADO'; // Estado inicial
     const newRestaurant = await restaurantRepository._create(restaurantData, addressData, cityId);
-    const verificationToken = jwt.sign({ id: newRestaurant.id, correo: newRestaurant.correo }, config.auth.jwtSecret, { expiresIn: config.auth.jwtExpiration });
+    const verificationToken = config.auth.createJWT({ id: newRestaurant.id, correo: newRestaurant.correo });
     console.log("vamos a enviar el correo: ", newRestaurant.correo, verificationToken);
     await sendVerificationEmail(newRestaurant.correo, verificationToken);
     return newRestaurant;
   }
 
   async login(data) {
-    const user = await restaurantRepository.findByEmail(data.correo);
+    const user = await this.findByEmail(data.correo);
     if (!user) {
       throw new Error('Correo o contraseña incorrectos');
     }
@@ -61,7 +64,7 @@ class RestaurantService extends RestaurantServiceInterface {
       throw new Error('Correo o contraseña incorrectos');
     }
 
-    const token = jwt.sign({ id: user.id, correo: user.correo }, config.auth.jwtSecret, { expiresIn: config.auth.jwtExpiration });
+    const token = JWT.createJWT({ id: user.id, correo: user.correo });
     return { token };
   }
   verifyEmail = async (id) => {
@@ -168,7 +171,7 @@ class RestaurantService extends RestaurantServiceInterface {
    * @param {Object} updates - Objeto con los campos a actualizar.
    * @returns {Promise<Restaurant>} El restaurante actualizado.
    */
-  async updateRestaurant(restaurantId, updates) {
+  static async updateRestaurant(restaurantId, updates) {
     if (!restaurantId) {
       throw new AppError("El ID del restaurante es requerido", 400);
     }
@@ -208,7 +211,7 @@ class RestaurantService extends RestaurantServiceInterface {
       throw new AppError("Todos los campos son obligatorios", 400);
     }
 
-    const restaurant = await restaurantRepository.findByEmail(correo);
+    const restaurant = await this.findByEmail(correo);
     if (!restaurant) {
       throw new AppError("Restaurante no encontrado", 404);
     }
@@ -233,7 +236,7 @@ class RestaurantService extends RestaurantServiceInterface {
       throw new AppError("El correo electrónico es requerido", 400);
     }
 
-    const restaurant = await restaurantRepository.findByEmail(email);
+    const restaurant = await this.findByEmail(email);
     if (!restaurant) {
       throw new AppError("Restaurante no encontrado", 404);
     }
@@ -264,6 +267,57 @@ class RestaurantService extends RestaurantServiceInterface {
     }
     return password;
   }
+
+  async hasPassword(correo){
+    return this.findByEmail(correo).then(restaurant => {
+      if(!restaurant){
+        return false;
+      }
+      return restaurant.contrasena ? true : false
+  });
+  }
+
+  async createWithGoogle(profile) {
+
+    const restaurantData = {
+      nombre: profile.displayName,
+      correo: profile.emails[0].value,
+      idAutenticacion: profile.id,
+      estado: "NO_VERIFICADO",
+      //poner los demas campos en null, no pueden ser undefined
+      telefono: null,
+      idTransaccional: null,
+      capacidadReservas: null,
+      categoria: null,
+      descripcion: null,
+      contrasena: null,
+      
+    };
+
+    const addressData = {
+      direccion: "Establecer dirección de " + profile.displayName,
+    };
+
+    const cityId = 1; // ID de la ciudad por defecto
+
+    //ahora se usa el repository y se envie correo de verificacion
+    const newRestaurant = await restaurantRepository._create(restaurantData, addressData, cityId);
+    const verificationToken = config.auth.createJWT({ id: newRestaurant.id, correo: newRestaurant.correo });
+    await sendVerificationEmail(newRestaurant.correo, verificationToken);
+    return newRestaurant;
+  }
+
+   async findByGoogleId(id) {
+    return await restaurantRepository.findByGoogleId(id);
+  }
+
+
+   async findByEmail(email) {
+    return await restaurantRepository.findByEmail(email);
+  }
 }
 
+
 module.exports = new RestaurantService();
+
+

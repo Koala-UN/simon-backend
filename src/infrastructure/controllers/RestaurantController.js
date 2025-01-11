@@ -1,7 +1,6 @@
 const restaurantService = require("../../domain/service/RestaurantService");
 const asyncHandler = require("../middleware/asyncHandler");
-const config = require("../../config/config");
-const jwt = require("jsonwebtoken");
+const JWT = require("../../utils/jwt");
 class RestaurantController {
   /**
    * Maneja la solicitud POST /restaurantes.
@@ -131,12 +130,7 @@ class RestaurantController {
       });
     }
     const result = await restaurantService.login(req.body);
-    res.cookie('token', result.token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', // Solo en producción
-      sameSite: 'Strict', // Protege contra CSRF
-      maxAge: 3600000 // 1 hora
-    });
+    JWT.createCookie(res,"token", result.token);
     res.status(200).json({
       status: "success",
     });
@@ -161,7 +155,7 @@ class RestaurantController {
     console.log("query", req.query);
   
     try {
-      const decoded = jwt.verify(token, config.auth.jwtSecret);
+      const decoded = JWT.verifyJWT(token);
       console.log('decoded=============: ', decoded);
       await restaurantService.verifyEmail(decoded.id);
       res.status(200).json({ status: 'success', message: 'Correo verificado exitosamente' });
@@ -184,7 +178,19 @@ class RestaurantController {
   });
 
 
+// crear un nuevo método para verificar si el usuario tiene una contraseña: hasPassword
 
+  hasPassword = asyncHandler(async (req, res) => {
+    const { correo } = req.body;
+    const hasPassword = await restaurantService.hasPassword(correo);
+    res.status(200).json({ status: 'success', data: { hasPassword } });
+  });
+
+  googleCallback = asyncHandler(async (req, res) => {
+    const { id, correo } = req.user;
+    JWT.createJWTCookie(res, { id, correo });
+    res.redirect(`${process.env.FRONTEND_URL}/`); // Redirigir al frontend usando la variable de entorno
+  });
   
 }
 

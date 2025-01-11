@@ -105,7 +105,7 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
         [
           restaurantData.nombre,
           restaurantData.correo,
-          restaurantData.contrasena,
+          restaurantData.contrasena || null,
           restaurantData.telefono,
           restaurantData.estado,
           restaurantData.idAutenticacion || null,
@@ -311,7 +311,7 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
       fields.push("contrasena = ?");
       values.push(updates.contrasena);
     }
-    
+
     if (updates.telefono) {
       fields.push("telefono = ?");
       values.push(updates.telefono);
@@ -335,6 +335,11 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
     if (updates.descripcion) {
       fields.push("descripcion = ?");
       values.push(updates.descripcion);
+    }
+
+    if(updates.idAutenticacion){
+      fields.push("id_autenticacion = ?");
+      values.push(updates.idAutenticacion);
     }
 
     if (fields.length === 0) {
@@ -372,6 +377,26 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
 
     await db.execute(query, values);
   }
+
+  // implementar findByGoogleId, teniendo en cuenta que el id de google se almacena en la tabla restaurante en el campo id_autenticacion
+
+  async findByGoogleId(googleId) {
+    const query = `SELECT * FROM restaurante WHERE id_autenticacion = ?`;
+    const [rows] = await db.execute(query, [googleId]);
+    return rows[0];
+  }
+
+
+
+
+
+
+
+
+
+
+
+
 }
 
 module.exports = new RestaurantRepository();

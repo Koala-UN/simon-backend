@@ -8,6 +8,8 @@ const app = express();
 const cors = require("cors");
 const cookieParser = require("cookie-parser"); // Importar cookie-parser
 
+const {passport} = require('./config/authConfig');
+
 const corsOptions = {
     origin: 'http://localhost:5173', // Reemplaza con el origen de tu frontend
     credentials: true, // Permite el envío de cookies
@@ -20,6 +22,8 @@ app.use(cors(corsOptions));
 app.use(cookieParser()); // Usar cookie-parser antes de cualquier middleware que necesite acceder a las cookies
 
 app.use(express.json()); // Agregar este middleware para parsear JSON
+app.use(passport.initialize());
+
 // Usar las rutas centralizadas
 app.use("/api", routes);
 
