@@ -1,16 +1,8 @@
 const express = require('express');
 const passport = require('passport');
 const router = express.Router();
-
 const restaurantController = require('../controllers/RestaurantController');
 const authMiddleware = require('../middleware/authMiddleware');
-const authConfig = require('../../config/authConfig');
-const jwt = require('jsonwebtoken');
-const config = require('../../config/config');
-const { auth } = require('../../config/config');
-const { OAuth2Client } = require('google-auth-library');
-const client = new OAuth2Client(auth.googleClientID);
-
 
 // Rutas de restaurantes
 router.post('/', restaurantController.createRestaurant);
@@ -22,25 +14,6 @@ router.get('/protected',authMiddleware, (req, res) => {
 });
 // Ruta para verificar el estado de autenticación
 router.get('/auth-status', authMiddleware, (req, res) => res.status(200).json({ authenticated: true, user: req.user }));
-
-router.post('/auth/google/login', async (req, res) => {
-  const { credential } = req.body;
-  try {
-    const ticket = await client.verifyIdToken({
-      idToken: credential,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
-    const payload = ticket.getPayload();
-    const userid = payload['sub'];
-
-    // Generar un JWT cookie
-    JWT.createJWTCookie(res, { id: userid, correo: payload.email });
-    res.status(200).json({ message: 'Inicio de sesión con Google exitoso' });
-  } catch (error) {
-    res.status(401).json({ message: 'Error en el inicio de sesión con Google', error });
-  }
-});
-
 
 // Rutas de autenticación con Google
 router.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
