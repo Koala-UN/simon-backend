@@ -16,6 +16,7 @@ const state = {
   Restaurante: {
     ACTIVO: "ACTIVO", // Inscripción activa
     INACTIVO: "INACTIVO", // Inscripción inactiva
+    NO_VERIFICADO: "NO_VERIFICADO", // Restaurante no verificado
   },
   // Estados posibles para reservas
   Reservas: {

@@ -9,7 +9,7 @@ class Restaurant {
     this.correo = data.correo || null;
     this.telefono = data.telefono || null;
     this.estado = data.estado || state.Restaurante.INACTIVO;
-    this.idAtenticacion = data.idAtenticacion || null;
+    this.idAutenticacion = data.idAutenticacion || null;
     this.idTransaccional = data.idTransaccional || null;
     this.capacidadReservas = data.capacidadReservas || null;
     this.direccionId = data.direccionId || null;
@@ -42,7 +42,7 @@ class Restaurant {
       correo: row.correo,
       telefono: row.telefono,
       estado: row.estado,
-      idAtenticacion: row.id_atenticacion,
+      idAutenticacion: row.id_autenticacion,
       idTransaccional: row.id_transaccional,
       capacidadReservas: row.capacidad_reservas,
       direccionId: row.direccion_id,
@@ -64,7 +64,7 @@ class Restaurant {
       correo: this.correo,
       telefono: this.telefono,
       estado: this.estado,
-      idAtenticacion: this.idAtenticacion,
+      idAutenticacion: this.idAutenticacion,
       idTransaccional: this.idTransaccional,
       capacidadReservas: this.capacidadReservas,
       direccionId: this.direccionId,
