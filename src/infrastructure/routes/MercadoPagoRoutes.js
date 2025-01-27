@@ -6,7 +6,7 @@ const router = express.Router();
 
 // Configuración de Mercado Pago
 const client = new MercadoPagoConfig({
-  accessToken: "APP_USR-315500731018483-012516-55132698f76483e00581dd12ba0fa0f2-2230401187", // Coloca tu access token aquí
+  accessToken: process.env.ACCESS_TOKEN_MERCADO_PAGO , // Coloca tu access token aquí
 });
 
 // Ruta de prueba
@@ -38,8 +38,6 @@ router.post("/create_preference", async (req, res) => {
 
     const preference = new Preference(client);
     const response = await preference.create({ body });
-
-    console.log(response);
     res.json({ id: response.id });
   } catch (error) {
     console.log(error);
