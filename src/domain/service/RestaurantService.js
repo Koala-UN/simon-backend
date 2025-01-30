@@ -47,7 +47,7 @@ class RestaurantService extends RestaurantServiceInterface {
     restaurantData.contrasena = hashedPassword;
     restaurantData.estado = 'NO_VERIFICADO'; // Estado inicial
     const newRestaurant = await restaurantRepository._create(restaurantData, addressData, cityId);
-    const verificationToken = config.auth.createJWT({ id: newRestaurant.id, correo: newRestaurant.correo });
+    const verificationToken = JWT.createJWT({ id: newRestaurant.id, correo: newRestaurant.correo });
     console.log("vamos a enviar el correo: ", newRestaurant.correo, verificationToken);
     await sendVerificationEmail(newRestaurant.correo, verificationToken);
     return newRestaurant;
@@ -223,7 +223,7 @@ class RestaurantService extends RestaurantServiceInterface {
     }
 
     const hashedNewPassword = await bcrypt.hash(newPassword, config.auth.bcryptSaltRounds);
-    await this.updateRestaurant(restaurant.id, { contrasena: hashedNewPassword });
+    await RestaurantService.updateRestaurant(restaurant.id, { contrasena: hashedNewPassword });
   }
 
   /**
@@ -243,7 +243,7 @@ class RestaurantService extends RestaurantServiceInterface {
 
     const newPassword = this._generateSecurePassword();
     const hashedNewPassword = await bcrypt.hash(newPassword, config.auth.bcryptSaltRounds);
-    await this.updateRestaurant(restaurant.id, { contrasena: hashedNewPassword });
+    await RestaurantService.updateRestaurant(restaurant.id, { contrasena: hashedNewPassword });
 
     const mailData = {
       from: process.env.EMAIL_USER,
@@ -302,7 +302,7 @@ class RestaurantService extends RestaurantServiceInterface {
 
     //ahora se usa el repository y se envie correo de verificacion
     const newRestaurant = await restaurantRepository._create(restaurantData, addressData, cityId);
-    const verificationToken = config.auth.createJWT({ id: newRestaurant.id, correo: newRestaurant.correo });
+    const verificationToken = JWT.createJWT({ id: newRestaurant.id, correo: newRestaurant.correo });
     await sendVerificationEmail(newRestaurant.correo, verificationToken);
     return newRestaurant;
   }
