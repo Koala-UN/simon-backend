@@ -18,9 +18,9 @@ module.exports = {
         publicKey: process.env.PUBLIC_KEY_PAGO_2||'undefined',
     },
     cloudinary: {
-        cloud_name: process.env.CLOUD_NAME || 'undefined',
-        api_key: process.env.API_KEY || 'undefined',
-        api_secret: process.env.API_SECRET || 'undefined',
+        cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'undefined',
+        api_key: process.env.CLOUDINARY_API_KEY || 'undefined',
+        api_secret: process.env.CLOUDINARY_API_SECRET || 'undefined',
     },    
     auth: {
         jwtSecret: process.env.JWT_SECRET,
