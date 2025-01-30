@@ -7,7 +7,7 @@ const dishRoutes = require("./DishRoutes");
 const restaurantRoutes = require("./RestaurantRoutes");
 const tableRoutes = require('./TableRoutes');
 const router = express.Router();
-
+const mercadoPagoRoutes = require('./MercadoPagoRoutes');
 // Agrupa las rutas
 router.use("/countries", countryRoutes);
 router.use("/hello", helloRoutes);
@@ -16,4 +16,5 @@ router.use("/reserve",reservationRoutes );
 router.use("/dish", dishRoutes);
 router.use("/restaurant", restaurantRoutes);
 router.use('/table',tableRoutes);
+router.use("/payment",mercadoPagoRoutes);
 module.exports = router;
