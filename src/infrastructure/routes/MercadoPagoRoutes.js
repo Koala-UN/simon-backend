@@ -1,6 +1,6 @@
 // infrastructure/routes/MercadoPagoRoutes.js
 const express = require("express");
-const { MercadoPagoConfig, Preference } = require("mercadopago");
+const { MercadoPagoConfig, Preference,Payment } = require("mercadopago");
 
 const router = express.Router();
 
@@ -26,14 +26,15 @@ router.post("/create_preference", async (req, res) => {
         },
       ],
       back_urls: {
-        success: "https://github.com/Koala-UN/simon-backend",
-        failure: "http://localhost:5173/",
-        pending: "http://localhost:5173/",
+        success: "http://localhost:5173/",
+        failure: "https://github.com/Koala-UN/simon-backend",
+        pending: "https://github.com/Koala-UN/simon-backend",
       },
       auto_return: "approved",
       payment_methods: {
         installments: null,
       },
+      notification_url: "https://simon-backend.herokuapp.com/payment/webhooks",
     };
 
     const preference = new Preference(client);
@@ -43,6 +44,32 @@ router.post("/create_preference", async (req, res) => {
     console.log(error);
     res.status(500).json({
       error: "Ocurrió un error al crear la preferencia.",
+    });
+  }
+});
+
+
+router.post("/webhooks", async (req, res) => {
+  const paymentId = req.body.data && req.body.data.id; // Extraer el ID correctamente
+
+  if (!paymentId) {
+    return res.status(400).json({ error: "No se recibió un paymentId válido en el webhook." });
+  }
+
+  try {
+    const payment = new Payment(client);
+    const response = await payment.get({ id: paymentId });
+
+    if (response.status === 200) {
+      console.log(response);
+    }
+    console.log(response.id);
+
+    res.status(200).send("OK");
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      error: "Ocurrió un error al obtener el pago.",
     });
   }
 });
