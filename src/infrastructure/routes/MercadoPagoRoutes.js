@@ -34,6 +34,7 @@ router.post("/create_preference", async (req, res) => {
       payment_methods: {
         installments: null,
       },
+      notification_url: "https://simon-backend.herokuapp.com/payment/webhooks",
     };
 
     const preference = new Preference(client);
