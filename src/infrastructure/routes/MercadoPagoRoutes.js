@@ -42,8 +42,9 @@ router.post("/create_preference", async (req, res) => {
 });
 
 router.post("/webhooks", async (req, res) => {
-  const paymentId = req.body.data && req.body.data.id; // Extraer el ID correctamente
-
+  const response =await req.body;
+  const paymentId = response.data && response.data.id; // Extraer el ID correctamente
+  console.log("Datos del solicitud: ", response);
   if (!paymentId) {
     return res
       .status(400)
