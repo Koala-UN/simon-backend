@@ -54,10 +54,8 @@ router.post("/webhooks", async (req, res) => {
     const payment = new Payment(client);
     const response = await payment.get({ id: paymentId });
 
-    if (response.status === 200) {
-      res.status(200).json({ message: "Compra realizada con éxito" });
-      console.log("Webhook recibido correctamente para i: ", response.id);
-    }
+    res.status(200).json({ message: "Compra realizada con éxito" });
+    console.log("Webhook recibido correctamente para i: ", response.id);
   } catch (error) {
     console.log(error);
     res.status(500).json({
