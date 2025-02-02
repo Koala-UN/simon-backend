@@ -1,12 +1,12 @@
 // infrastructure/routes/MercadoPagoRoutes.js
 const express = require("express");
-const { MercadoPagoConfig, Preference,Payment } = require("mercadopago");
+const { MercadoPagoConfig, Preference, Payment } = require("mercadopago");
 
 const router = express.Router();
 
 // Configuración de Mercado Pago
 const client = new MercadoPagoConfig({
-  accessToken: process.env.ACCESS_TOKEN_MERCADO_PAGO , // Coloca tu access token aquí
+  accessToken: process.env.ACCESS_TOKEN_MERCADO_PAGO, // Coloca tu access token aquí
 });
 
 // Ruta de prueba
@@ -41,12 +41,13 @@ router.post("/create_preference", async (req, res) => {
   }
 });
 
-
 router.post("/webhooks", async (req, res) => {
   const paymentId = req.body.data && req.body.data.id; // Extraer el ID correctamente
 
   if (!paymentId) {
-    return res.status(400).json({ error: "No se recibió un paymentId válido en el webhook." });
+    return res
+      .status(400)
+      .json({ error: "No se recibió un paymentId válido en el webhook." });
   }
 
   try {
@@ -54,11 +55,9 @@ router.post("/webhooks", async (req, res) => {
     const response = await payment.get({ id: paymentId });
 
     if (response.status === 200) {
-      console.log(response);
+      res.status(200).json({ message: "Compra realizada con éxito" });
+      console.log("Webhook recibido correctamente para i: ", response.id);
     }
-    console.log(response.id);
-
-    res.status(200).send("OK");
   } catch (error) {
     console.log(error);
     res.status(500).json({
