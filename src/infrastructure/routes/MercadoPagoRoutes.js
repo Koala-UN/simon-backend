@@ -32,7 +32,9 @@ router.post("/create_preference", async (req, res) => {
 
     const preference = new Preference(client);
     const response = await preference.create({ body });
-    res.json({ id: response.id });
+    res.json({ id: response.id,
+      data: response,
+     });
   } catch (error) {
     console.log(error);
     res.status(500).json({
