@@ -25,12 +25,6 @@ router.post("/create_preference", async (req, res) => {
           unit_price: req.body.unit_price,
         },
       ],
-      back_urls: {
-        success: "http://localhost:5173/",
-        failure: "https://github.com/Koala-UN/simon-backend",
-        pending: "https://github.com/Koala-UN/simon-backend",
-      },
-      auto_return: "approved",
       payment_methods: {
         installments: null,
       },
