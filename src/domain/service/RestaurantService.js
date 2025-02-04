@@ -1,4 +1,4 @@
-const restaurantRepository = require("../../infrastructure/repositories/RestaurantRepository");
+const RestaurantRepository = require("../../infrastructure/repositories/RestaurantRepository");
 const category = require("../../utils/cagetory");
 const AppError = require("../exception/AppError");
 const RestaurantServiceInterface = require("../interfaces/restaurant/ServiceInterface");
@@ -9,29 +9,28 @@ const JWT = require('../../utils/jwt');
 const { sendVerificationEmail, sendEmail } = require('../../utils/email');
 
 class RestaurantService extends RestaurantServiceInterface {
-
-
-
   /**
    * Crea un nuevo restaurante con su dirección asociada.
+   * sin necesidad de autenticarse, solo para propositos de prueba
    * @param {Object} restaurantData - Datos del restaurante.
    * @param {Object} addressData - Datos de la dirección.
    * @param {number} cityId - ID de la ciudad.
    * @returns {Promise<Restaurant>} El restaurante creado.
    */
-  async createRestaurant(restaurantData, addressData, cityId) {
+  async createRestaurant(restaurantData, addressData, cityId, suscriptionData) {
     // Validar los datos del restaurante y la dirección
     this._validateRestaurantData(restaurantData);
     this._validateAddressData(addressData);
 
-    return await restaurantRepository.create(
+    return await RestaurantRepository._create(
       restaurantData,
       addressData,
+      suscriptionData,
       cityId
     );
   }
 
-  async register(restaurantData, addressData, cityId) {
+  async register(restaurantData, addressData, cityId,suscriptionData) {
 
     // Validar los datos del restaurante y la dirección
     //this._validateRestaurantData(restaurantData);
@@ -46,7 +45,7 @@ class RestaurantService extends RestaurantServiceInterface {
     const hashedPassword = await bcrypt.hash(restaurantData.contrasena, config.auth.bcryptSaltRounds);
     restaurantData.contrasena = hashedPassword;
     restaurantData.estado = 'NO_VERIFICADO'; // Estado inicial
-    const newRestaurant = await restaurantRepository._create(restaurantData, addressData, cityId);
+    const newRestaurant = await RestaurantRepository._create(restaurantData, addressData, cityId,suscriptionData);
     const verificationToken = JWT.createJWT({ id: newRestaurant.id, correo: newRestaurant.correo });
     console.log("vamos a enviar el correo: ", newRestaurant.correo, verificationToken);
     await sendVerificationEmail(newRestaurant.correo, verificationToken);
@@ -68,7 +67,7 @@ class RestaurantService extends RestaurantServiceInterface {
     return { token };
   }
   verifyEmail = async (id) => {
-    await restaurantRepository.updateRestaurant(id, { estado: 'ACTIVO' });
+    await RestaurantRepository.updateRestaurant(id, { estado: 'ACTIVO' });
   }
 
 
@@ -118,7 +117,7 @@ class RestaurantService extends RestaurantServiceInterface {
     if (!restaurantId) {
       throw new AppError("El ID del restaurante es requerido", 400);
     }
-    return await restaurantRepository.findById(restaurantId);
+    return await RestaurantRepository.findById(restaurantId);
   }
 
 
@@ -131,7 +130,7 @@ class RestaurantService extends RestaurantServiceInterface {
     if (!restaurantId) {
       throw new AppError("El ID del restaurante es requerido", 400);
     }
-    return await restaurantRepository.findById(restaurantId);
+    return await RestaurantRepository.findById(restaurantId);
   }
 
   /**
@@ -145,7 +144,7 @@ class RestaurantService extends RestaurantServiceInterface {
       if (!Object.values(category.Restaurante).includes(filters.category) && filters.category != undefined) {
         throw new AppError("La categoria no es valida", 400);
       }
-      return await restaurantRepository.findAll(filters);
+      return await RestaurantRepository.findAll(filters);
     } catch (error) {
       throw new AppError("Error al obtener los restaurantes", 500);
     }
@@ -162,7 +161,7 @@ class RestaurantService extends RestaurantServiceInterface {
     if (!restaurantId) {
       throw new AppError("El ID del restaurante es requerido", 400);
     }
-    await restaurantRepository.deleteRestaurant(restaurantId);
+    await RestaurantRepository.deleteRestaurant(restaurantId);
   }
 
   /**
@@ -176,13 +175,13 @@ class RestaurantService extends RestaurantServiceInterface {
       throw new AppError("El ID del restaurante es requerido", 400);
     }
 
-    const restaurant = await restaurantRepository.findById(restaurantId);
+    const restaurant = await RestaurantRepository.findById(restaurantId);
     if (!restaurant) {
       throw new AppError("Restaurante no encontrado", 404);
     }
 
     if (updates.address) {
-      await restaurantRepository.updateAddress(
+      await RestaurantRepository.updateAddress(
         restaurant.direccionId,
         updates.address
       );
@@ -191,11 +190,11 @@ class RestaurantService extends RestaurantServiceInterface {
     const restaurantUpdates = { ...updates };
     delete restaurantUpdates.address;
 
-    await restaurantRepository.updateRestaurant(
+    await RestaurantRepository.updateRestaurant(
       restaurantId,
       restaurantUpdates
     );
-    return await restaurantRepository.findById(restaurantId);
+    return await RestaurantRepository.findById(restaurantId);
   }
 
 
@@ -301,19 +300,19 @@ class RestaurantService extends RestaurantServiceInterface {
     const cityId = 1; // ID de la ciudad por defecto
 
     //ahora se usa el repository y se envie correo de verificacion
-    const newRestaurant = await restaurantRepository._create(restaurantData, addressData, cityId);
+    const newRestaurant = await RestaurantRepository._create(restaurantData, addressData, cityId);
     const verificationToken = JWT.createJWT({ id: newRestaurant.id, correo: newRestaurant.correo });
     await sendVerificationEmail(newRestaurant.correo, verificationToken);
     return newRestaurant;
   }
 
    async findByGoogleId(id) {
-    return await restaurantRepository.findByGoogleId(id);
+    return await RestaurantRepository.findByGoogleId(id);
   }
 
 
    async findByEmail(email) {
-    return await restaurantRepository.findByEmail(email);
+    return await RestaurantRepository.findByEmail(email);
   }
 }
 

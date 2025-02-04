@@ -8,10 +8,11 @@ class RestaurantController {
    * @param {Object} res - Objeto de respuesta.
    */
   createRestaurant = asyncHandler(async (req, res) => {
-    const { restaurantData, addressData, cityId } = req.body;
+    const { restaurantData, addressData, cityId,suscriptionData } = req.body;
     const newRestaurant = await restaurantService.createRestaurant(
       restaurantData,
       addressData,
+      suscriptionData,
       cityId
     );
     res.status(201).json({
@@ -103,10 +104,11 @@ class RestaurantController {
    * @param {Object} res - Objeto de respuesta.
    */
   registerRestaurant = asyncHandler(async (req, res) => {
-    const { restaurantData, addressData, cityId } = req.body;
+    const { restaurantData, addressData, cityId,suscriptionData } = req.body;
     restaurantData.addressData = addressData;
     restaurantData.cityId = cityId;
-    const newRestaurant = await restaurantService.register(restaurantData, addressData, cityId);
+    restaurantData.suscriptionData = suscriptionData;
+    const newRestaurant = await restaurantService.register(restaurantData, addressData, cityId,suscriptionData);
     res.status(201).json({
       status: "success",
       data: newRestaurant.toJSON(),

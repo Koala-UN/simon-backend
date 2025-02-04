@@ -4,74 +4,10 @@ const Restaurant = require("../../domain/models/RestaurantModel");
 const Address = require("../../domain/models/AddressModel");
 const category = require("../../utils/cagetory");
 const getImgUrl = require("../../utils/getImgUrl");
-
+const Suscription = require("../../domain/models/SuscriptionModel");
 const AppError = require("../../domain/exception/AppError");
 
 class RestaurantRepository extends RestaurantRepositoryInterface {
-  /**
-   * Crea un nuevo restaurante con su dirección asociada.
-   * @param {Object} restaurantData - Datos del restaurante.
-   * @param {Object} addressData - Datos de la dirección.
-   * @param {number} cityId - ID de la ciudad.
-   * @returns {Promise<Restaurant>} El restaurante creado.
-   */
-  async create(restaurantData, addressData, cityId) {
-    const connection = await db.getConnection();
-    try {
-      await connection.beginTransaction();
-
-      // Insertar dirección
-      const [addressResult] = await connection.execute(
-        `INSERT INTO direccion (ciudad_id, direccion) VALUES (?, ?)`,
-        [cityId, addressData.direccion]
-      );
-      const addressId = addressResult.insertId;
-      /*TODO:
-       Tener presente si para los ids de mercadopago y ath0 toca colocar ids por default 
-       para evitar problemas, por el tema de que estamos en desarrollo
-       */
-      restaurantData.categoria =
-        restaurantData.categoria ?? category.Restaurante.CASUAL_DINING;
-      // Insertar restaurante
-      const [restaurantResult] = await connection.execute(
-        `INSERT INTO restaurante (nombre, correo, telefono, estado, id_autenticacion, id_transaccional, capacidad_reservas,categoria,descripcion, direccion_id)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?,?, ?)`,
-        [
-          restaurantData.nombre,
-          restaurantData.correo,
-          restaurantData.telefono,
-          restaurantData.estado,
-          restaurantData.idAutenticacion,
-          restaurantData.idTransaccional,
-          restaurantData.capacidadReservas,
-          restaurantData.categoria,
-          restaurantData.descripcion,
-          addressId,
-        ]
-      );
-
-      await connection.commit();
-
-      const address = new Address({
-        id: addressId,
-        ciudadId: cityId,
-        direccion: addressData.direccion,
-      });
-
-      return new Restaurant({
-        id: restaurantResult.insertId,
-        ...restaurantData,
-        direccionId: addressId,
-        address: address,
-      });
-    } catch (error) {
-      await connection.rollback();
-      throw error;
-    } finally {
-      connection.release();
-    }
-  }
-
   /**
    * Encuentra un restaurante por su correo.
    * @param {string} correo - correo del restaurante.
@@ -82,8 +18,16 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
     const [rows] = await db.execute(query, [correo]);
     return rows[0];
   }
+  /**
+   * Crea un nuevo restaurante con su dirección asociada.
+   * @param {Object} restaurantData - Datos del restaurante.
+   * @param {Object} addressData - Datos de la dirección.
+   * @param {number} cityId - ID de la ciudad.
+   * @param {Object} suscriptionData - Datos de la suscripción.
+   * @returns {Promise<Restaurant>} El restaurante creado.
+   */
 
-  async _create(restaurantData, addressData, cityId) {
+  async _create(restaurantData, addressData, cityId, suscriptionData) {
     const connection = await db.getConnection();
     try {
       await connection.beginTransaction();
@@ -94,15 +38,24 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
         [cityId, addressData.direccion]
       );
       const addressId = addressResult.insertId;
-      /*TODO:
-       Tener presente si para los ids de mercadopago y ath0 toca colocar ids por default 
-       para evitar problemas, por el tema de que estamos en desarrollo
-       */
+      const [suscriptionResult] = await connection.execute(
+        `INSERT INTO suscripcion (tipo, fecha_suscripcion, fecha_vencimiento) 
+         VALUES (?, CURRENT_DATE, 
+         CASE 
+           WHEN ? = 'MENSUAL' THEN DATE_ADD(CURRENT_DATE, INTERVAL 1 MONTH) 
+           WHEN ? = 'ANUAL' THEN DATE_ADD(CURRENT_DATE, INTERVAL 1 YEAR) 
+           ELSE NULL 
+         END)`,
+        [suscriptionData.tipo, suscriptionData.tipo, suscriptionData.tipo]
+      );
+
+      const suscriptionId = suscriptionResult.insertId;
+
       restaurantData.categoria =
         restaurantData.categoria ?? category.Restaurante.CASUAL_DINING;
       // Insertar restaurante
       const [restaurantResult] = await connection.execute(
-        `INSERT INTO restaurante (nombre, correo, contrasena, telefono, estado, id_autenticacion, id_transaccional, capacidad_reservas,categoria,descripcion, direccion_id)
+        `INSERT INTO restaurante (nombre, correo, contrasena, telefono, estado, id_autenticacion, capacidad_reservas,categoria,descripcion, direccion_id,suscripcion_id)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           restaurantData.nombre,
@@ -111,11 +64,11 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
           restaurantData.telefono,
           restaurantData.estado,
           restaurantData.idAutenticacion || null,
-          restaurantData.idTransaccional,
           restaurantData.capacidadReservas,
           restaurantData.categoria,
           restaurantData.descripcion,
           addressId,
+          suscriptionId,
         ]
       );
 
@@ -126,12 +79,18 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
         ciudadId: cityId,
         direccion: addressData.direccion,
       });
-
+      const suscription = new Suscription({
+        id: suscriptionId,
+        tipo: suscriptionData.tipo,
+        fechaSuscripcion: suscriptionData.inicio,
+        fechaVencimiento: suscriptionData.fin,
+      });
       return new Restaurant({
         id: restaurantResult.insertId,
         ...restaurantData,
         direccionId: addressId,
         address: address,
+        suscripcion: suscription,
       });
     } catch (error) {
       await connection.rollback();
@@ -140,7 +99,6 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
       connection.release();
     }
   }
-
 
   /**
    * Encuentra un restaurante por su ID.
@@ -151,6 +109,7 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
     const query = `
           SELECT r.*, d.*, c.id AS ciudad_id, c.nombre AS ciudad_nombre, dp.id AS departamento_id, dp.nombre AS departamento_nombre, p.id AS pais_id, p.nombre AS pais_nombre
           FROM restaurante r
+          JOIN suscripcion s ON r.suscripcion_id = s.id
           JOIN direccion d ON r.direccion_id = d.id
           JOIN ciudad c ON d.ciudad_id = c.id
           JOIN departamento dp ON c.departamento_id = dp.id
@@ -166,6 +125,7 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
     }
     const row = rows[0];
     const address = Address.fromDB(row);
+    
     return new Restaurant({
       id: row.id,
       nombre: row.nombre,
@@ -311,7 +271,7 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
       fields.push("correo = ?");
       values.push(updates.correo);
     }
-    if(updates.contrasena){
+    if (updates.contrasena) {
       fields.push("contrasena = ?");
       values.push(updates.contrasena);
     }
@@ -341,7 +301,7 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
       values.push(updates.descripcion);
     }
 
-    if(updates.idAutenticacion){
+    if (updates.idAutenticacion) {
       fields.push("id_autenticacion = ?");
       values.push(updates.idAutenticacion);
     }
@@ -389,18 +349,6 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
     const [rows] = await db.execute(query, [googleId]);
     return rows[0];
   }
-
-
-
-
-
-
-
-
-
-
-
-
 }
 
 module.exports = new RestaurantRepository();

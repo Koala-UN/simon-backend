@@ -1,7 +1,7 @@
 const state = require("../../utils/state");
 const Address = require("./AddressModel");
 const category = require("../../utils/cagetory");
-
+const Suscription = require("./SuscriptionModel");
 class Restaurant {
   constructor(data = {}) {
     this.id = data.id || null;
@@ -10,13 +10,13 @@ class Restaurant {
     this.telefono = data.telefono || null;
     this.estado = data.estado || state.Restaurante.INACTIVO;
     this.idAutenticacion = data.idAutenticacion || null;
-    this.idTransaccional = data.idTransaccional || null;
     this.capacidadReservas = data.capacidadReservas || null;
     this.direccionId = data.direccionId || null;
     this.address = data.address ? new Address(data.address) : null;
     this.categoria = data.categoria || null;
     this.descripcion = data.descripcion || null;
     this.imageUrl = data.imageUrl || null;
+    this.suscripcion = data.suscripcion || null;
     this.validateCategory();
   }
   validateCategory() {
@@ -43,12 +43,12 @@ class Restaurant {
       telefono: row.telefono,
       estado: row.estado,
       idAutenticacion: row.id_autenticacion,
-      idTransaccional: row.id_transaccional,
       capacidadReservas: row.capacidad_reservas,
       direccionId: row.direccion_id,
       categoria: row.categoria,
       descripcion: row.descripcion,
       address: row.address ? Address.fromDB(row.address) : null,
+      suscripcion: row.suscripcion ? Suscription.fromDB(row.suscripcion) : null,
       imageUrl: row.imageUrl,
     });
   }
@@ -65,12 +65,12 @@ class Restaurant {
       telefono: this.telefono,
       estado: this.estado,
       idAutenticacion: this.idAutenticacion,
-      idTransaccional: this.idTransaccional,
       capacidadReservas: this.capacidadReservas,
       direccionId: this.direccionId,
       categoria: this.categoria,
       descripcion: this.descripcion,
       address: this.address ? this.address.toJSON() : null,
+      suscripcion: this.suscripcion ? this.suscripcion.toJSON() : null,
       imageUrl: this.imageUrl
     };
   }
