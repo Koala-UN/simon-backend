@@ -107,7 +107,12 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
    */
   async findById(restaurantId) {
     const query = `
-          SELECT r.*, d.*, c.id AS ciudad_id, c.nombre AS ciudad_nombre, dp.id AS departamento_id, dp.nombre AS departamento_nombre, p.id AS pais_id, p.nombre AS pais_nombre
+          SELECT r.*, d.*, c.id AS ciudad_id, c.nombre AS ciudad_nombre, dp.id AS departamento_id, dp.nombre AS departamento_nombre, p.id AS pais_id, p.nombre AS pais_nombre,
+              s.id AS suscripcion_id,
+        s.tipo AS suscripcion_tipo,
+        s.fecha_suscripcion AS suscripcion_fecha_suscripcion,
+        s.fecha_vencimiento AS suscripcion_fecha_vencimiento
+          
           FROM restaurante r
           JOIN suscripcion s ON r.suscripcion_id = s.id
           JOIN direccion d ON r.direccion_id = d.id
@@ -125,7 +130,7 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
     }
     const row = rows[0];
     const address = Address.fromDB(row);
-    
+    const suscripcion = Suscription.fromDB(row);
     return new Restaurant({
       id: row.id,
       nombre: row.nombre,
@@ -139,6 +144,7 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
       categoria: row.categoria,
       descripcion: row.descripcion,
       address: address,
+      suscripcion: suscripcion,
       imageUrl: getImgUrl(row.categoria, "restaurant"),
     });
   }
@@ -159,27 +165,31 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
    * @param {string} [filters.category] - The category of the restaurant to filter by.
    * @returns {Promise<Restaurant[]>} A promise that resolves to an array of Restaurant objects.
    */
-
   async findAll({ countryId, departmentId, cityId, category }) {
     let query = `
-    SELECT 
-      r.*, 
-      d.*, 
-      c.id AS ciudad_id, 
-      c.nombre AS ciudad_nombre,
-      dp.id AS departamento_id, 
-      dp.nombre AS departamento_nombre,
-      p.id AS pais_id, 
-      p.nombre AS pais_nombre
-    FROM restaurante r
-    JOIN direccion d ON r.direccion_id = d.id
-    JOIN ciudad c ON d.ciudad_id = c.id
-    JOIN departamento dp ON c.departamento_id = dp.id
-    JOIN pais p ON dp.pais_id = p.id
-    WHERE 1 = 1
-  `;
+      SELECT 
+        r.*, 
+        d.*, 
+        c.id AS ciudad_id, 
+        c.nombre AS ciudad_nombre,
+        dp.id AS departamento_id, 
+        dp.nombre AS departamento_nombre,
+        p.id AS pais_id, 
+        p.nombre AS pais_nombre,
+        s.id AS suscripcion_id,
+        s.tipo AS suscripcion_tipo,
+        s.fecha_suscripcion AS suscripcion_fecha_suscripcion,
+        s.fecha_vencimiento AS suscripcion_fecha_vencimiento
+      FROM restaurante r
+      JOIN suscripcion s ON r.suscripcion_id = s.id
+      JOIN direccion d ON r.direccion_id = d.id
+      JOIN ciudad c ON d.ciudad_id = c.id
+      JOIN departamento dp ON c.departamento_id = dp.id
+      JOIN pais p ON dp.pais_id = p.id
+      WHERE 1 = 1
+    `;
     const params = [];
-
+  
     if (countryId) {
       query += " AND p.id = ?";
       params.push(countryId);
@@ -196,10 +206,15 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
       query += " AND r.categoria = ?";
       params.push(category);
     }
-
+  
     const [rows] = await db.execute(query, params);
     return rows.map((row) => {
+      // Crear la instancia de Address (ya que la tabla dirección ya se mapea)
       const address = Address.fromDB(row);
+  
+      // Crear la instancia de Suscription usando los alias definidos en la consulta
+      const suscripcion = Suscription.fromDB(row);
+  
       return new Restaurant({
         id: row.id,
         nombre: row.nombre,
@@ -207,16 +222,18 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
         telefono: row.telefono,
         estado: row.estado,
         idAutenticacion: row.id_autenticacion,
-        idTransaccional: row.id_transaccional,
+        // Otros campos propios del restaurante…
         capacidadReservas: row.capacidad_reservas,
         direccionId: row.direccion_id,
         categoria: row.categoria,
         descripcion: row.descripcion,
         address,
+        suscripcion, // Se incluye la suscripción en el modelo Restaurant
         imageUrl: getImgUrl(row.categoria, "restaurant"),
       });
     });
   }
+  
   /**
    * Elimina un restaurante por su ID y la dirección asociada.
    * @param {number} restaurantId - ID del restaurante.
