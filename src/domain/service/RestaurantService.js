@@ -2,11 +2,11 @@ const RestaurantRepository = require("../../infrastructure/repositories/Restaura
 const category = require("../../utils/cagetory");
 const AppError = require("../exception/AppError");
 const RestaurantServiceInterface = require("../interfaces/restaurant/ServiceInterface");
-const bcrypt = require('bcrypt');
+const bcrypt = require("bcrypt");
 const config = require("../../config/config");
-const authConfig = require('../../config/authConfig');
-const JWT = require('../../utils/jwt');
-const { sendVerificationEmail, sendEmail } = require('../../utils/email');
+const authConfig = require("../../config/authConfig");
+const JWT = require("../../utils/jwt");
+const { sendVerificationEmail, sendEmail } = require("../../utils/email");
 
 class RestaurantService extends RestaurantServiceInterface {
   /**
@@ -21,33 +21,48 @@ class RestaurantService extends RestaurantServiceInterface {
     // Validar los datos del restaurante y la dirección
     this._validateRestaurantData(restaurantData);
     this._validateAddressData(addressData);
+    this._validateSuscriptionData(suscriptionData);
 
     return await RestaurantRepository._create(
       restaurantData,
       addressData,
-      suscriptionData,
-      cityId
+      cityId,
+      suscriptionData
     );
   }
 
-  async register(restaurantData, addressData, cityId,suscriptionData) {
-
+  async register(restaurantData, addressData, cityId, suscriptionData) {
     // Validar los datos del restaurante y la dirección
     //this._validateRestaurantData(restaurantData);
     this._validateAddressData(addressData);
-
+    this._validateSuscriptionData(suscriptionData);
     // validar que el correo no exista
     const existingRestaurant = await this.findByEmail(restaurantData.correo);
     if (existingRestaurant) {
-      throw new AppError('El correo ya está en uso');
+      throw new AppError("El correo ya está en uso");
     }
 
-    const hashedPassword = await bcrypt.hash(restaurantData.contrasena, config.auth.bcryptSaltRounds);
+    const hashedPassword = await bcrypt.hash(
+      restaurantData.contrasena,
+      config.auth.bcryptSaltRounds
+    );
     restaurantData.contrasena = hashedPassword;
-    restaurantData.estado = 'NO_VERIFICADO'; // Estado inicial
-    const newRestaurant = await RestaurantRepository._create(restaurantData, addressData, cityId,suscriptionData);
-    const verificationToken = JWT.createJWT({ id: newRestaurant.id, correo: newRestaurant.correo });
-    console.log("vamos a enviar el correo: ", newRestaurant.correo, verificationToken);
+    restaurantData.estado = "NO_VERIFICADO"; // Estado inicial
+    const newRestaurant = await RestaurantRepository._create(
+      restaurantData,
+      addressData,
+      cityId,
+      suscriptionData
+    );
+    const verificationToken = JWT.createJWT({
+      id: newRestaurant.id,
+      correo: newRestaurant.correo,
+    });
+    console.log(
+      "vamos a enviar el correo: ",
+      newRestaurant.correo,
+      verificationToken
+    );
     await sendVerificationEmail(newRestaurant.correo, verificationToken);
     return newRestaurant;
   }
@@ -55,22 +70,23 @@ class RestaurantService extends RestaurantServiceInterface {
   async login(data) {
     const user = await this.findByEmail(data.correo);
     if (!user) {
-      throw new Error('Correo o contraseña incorrectos');
+      throw new Error("Correo o contraseña incorrectos");
     }
 
-    const isPasswordValid = await bcrypt.compare(data.contrasena, user.contrasena);
+    const isPasswordValid = await bcrypt.compare(
+      data.contrasena,
+      user.contrasena
+    );
     if (!isPasswordValid) {
-      throw new Error('Correo o contraseña incorrectos');
+      throw new Error("Correo o contraseña incorrectos");
     }
 
     const token = JWT.createJWT({ id: user.id, correo: user.correo });
     return { token };
   }
   verifyEmail = async (id) => {
-    await RestaurantRepository.updateRestaurant(id, { estado: 'ACTIVO' });
-  }
-
-
+    await RestaurantRepository.updateRestaurant(id, { estado: "ACTIVO" });
+  };
 
   /**
    * Valida los datos del restaurante.
@@ -84,7 +100,6 @@ class RestaurantService extends RestaurantServiceInterface {
       "telefono",
       "estado",
       "idAutenticacion",
-      "idTransaccional",
       "capacidadReservas",
     ];
     requiredFields.forEach((field) => {
@@ -93,7 +108,19 @@ class RestaurantService extends RestaurantServiceInterface {
       }
     });
   }
+  _validateSuscriptionData(suscriptionData) {
+    // Validar que se haya enviado un objeto de datos de suscripción
+    if (!suscriptionData || typeof suscriptionData !== "object") {
+      throw new AppError("Los datos de suscripción son obligatorios", 400);
+    }
 
+    const requiredFields = ["tipo"];
+    requiredFields.forEach((field) => {
+      if (!Object.prototype.hasOwnProperty.call(suscriptionData, field)) {
+        throw new AppError(`El campo ${field} es obligatorio`, 400);
+      }
+    });
+  }
   /**
    * Valida los datos de la dirección.
    * @param {Object} addressData - Datos de la dirección.
@@ -120,7 +147,6 @@ class RestaurantService extends RestaurantServiceInterface {
     return await RestaurantRepository.findById(restaurantId);
   }
 
-
   /**
    * Encuentra un restaurante por su ID.
    * @param {number} restaurantId - ID del restaurante.
@@ -141,7 +167,10 @@ class RestaurantService extends RestaurantServiceInterface {
    */
   async getAll(filters) {
     try {
-      if (!Object.values(category.Restaurante).includes(filters.category) && filters.category != undefined) {
+      if (
+        !Object.values(category.Restaurante).includes(filters.category) &&
+        filters.category != undefined
+      ) {
         throw new AppError("La categoria no es valida", 400);
       }
       return await RestaurantRepository.findAll(filters);
@@ -149,8 +178,6 @@ class RestaurantService extends RestaurantServiceInterface {
       throw new AppError("Error al obtener los restaurantes", 500);
     }
   }
-    
-  
 
   /**
    * Elimina un restaurante por su ID.
@@ -197,7 +224,6 @@ class RestaurantService extends RestaurantServiceInterface {
     return await RestaurantRepository.findById(restaurantId);
   }
 
-
   /**
    * Cambia la contraseña de un restaurante.
    * @param {number} id - ID del restaurante.
@@ -214,15 +240,30 @@ class RestaurantService extends RestaurantServiceInterface {
     if (!restaurant) {
       throw new AppError("Restaurante no encontrado", 404);
     }
-    console.log("***contraseña antigua: ", oldPassword, " contraseña nueva: ", newPassword, " restaurante: ", restaurant.contrasena);
+    console.log(
+      "***contraseña antigua: ",
+      oldPassword,
+      " contraseña nueva: ",
+      newPassword,
+      " restaurante: ",
+      restaurant.contrasena
+    );
 
-    const isPasswordValid = await bcrypt.compare(oldPassword, restaurant.contrasena);
+    const isPasswordValid = await bcrypt.compare(
+      oldPassword,
+      restaurant.contrasena
+    );
     if (!isPasswordValid) {
       throw new AppError("La contraseña antigua es incorrecta", 400);
     }
 
-    const hashedNewPassword = await bcrypt.hash(newPassword, config.auth.bcryptSaltRounds);
-    await RestaurantService.updateRestaurant(restaurant.id, { contrasena: hashedNewPassword });
+    const hashedNewPassword = await bcrypt.hash(
+      newPassword,
+      config.auth.bcryptSaltRounds
+    );
+    await RestaurantService.updateRestaurant(restaurant.id, {
+      contrasena: hashedNewPassword,
+    });
   }
 
   /**
@@ -241,14 +282,19 @@ class RestaurantService extends RestaurantServiceInterface {
     }
 
     const newPassword = this._generateSecurePassword();
-    const hashedNewPassword = await bcrypt.hash(newPassword, config.auth.bcryptSaltRounds);
-    await RestaurantService.updateRestaurant(restaurant.id, { contrasena: hashedNewPassword });
+    const hashedNewPassword = await bcrypt.hash(
+      newPassword,
+      config.auth.bcryptSaltRounds
+    );
+    await RestaurantService.updateRestaurant(restaurant.id, {
+      contrasena: hashedNewPassword,
+    });
 
     const mailData = {
       from: process.env.EMAIL_USER,
       to: email,
-      subject: 'Recuperación de contraseña',
-      html: `<p>Se le ha cambiado su contraseña a una provisional para que pueda acceder, su nueva contraseña es: ${newPassword}</p>`
+      subject: "Recuperación de contraseña",
+      html: `<p>Se le ha cambiado su contraseña a una provisional para que pueda acceder, su nueva contraseña es: ${newPassword}</p>`,
     };
 
     await sendEmail(mailData.to, mailData.subject, mailData.html);
@@ -259,7 +305,8 @@ class RestaurantService extends RestaurantServiceInterface {
    * @returns {string} La contraseña generada.
    */
   _generateSecurePassword(length = 12) {
-    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&*";
+    const charset =
+      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&*";
     let password = "";
     for (let i = 0, n = charset.length; i < length; ++i) {
       password += charset.charAt(Math.floor(Math.random() * n));
@@ -267,17 +314,16 @@ class RestaurantService extends RestaurantServiceInterface {
     return password;
   }
 
-  async hasPassword(correo){
-    return this.findByEmail(correo).then(restaurant => {
-      if(!restaurant){
+  async hasPassword(correo) {
+    return this.findByEmail(correo).then((restaurant) => {
+      if (!restaurant) {
         return false;
       }
-      return restaurant.contrasena ? true : false
-  });
+      return restaurant.contrasena ? true : false;
+    });
   }
 
   async createWithGoogle(profile) {
-
     const restaurantData = {
       nombre: profile.displayName,
       correo: profile.emails[0].value,
@@ -290,7 +336,6 @@ class RestaurantService extends RestaurantServiceInterface {
       categoria: null,
       descripcion: null,
       contrasena: null,
-      
     };
 
     const addressData = {
@@ -300,23 +345,26 @@ class RestaurantService extends RestaurantServiceInterface {
     const cityId = 1; // ID de la ciudad por defecto
 
     //ahora se usa el repository y se envie correo de verificacion
-    const newRestaurant = await RestaurantRepository._create(restaurantData, addressData, cityId);
-    const verificationToken = JWT.createJWT({ id: newRestaurant.id, correo: newRestaurant.correo });
+    const newRestaurant = await RestaurantRepository._create(
+      restaurantData,
+      addressData,
+      cityId
+    );
+    const verificationToken = JWT.createJWT({
+      id: newRestaurant.id,
+      correo: newRestaurant.correo,
+    });
     await sendVerificationEmail(newRestaurant.correo, verificationToken);
     return newRestaurant;
   }
 
-   async findByGoogleId(id) {
+  async findByGoogleId(id) {
     return await RestaurantRepository.findByGoogleId(id);
   }
 
-
-   async findByEmail(email) {
+  async findByEmail(email) {
     return await RestaurantRepository.findByEmail(email);
   }
 }
 
-
 module.exports = new RestaurantService();
-
-

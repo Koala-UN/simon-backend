@@ -20,7 +20,7 @@ class Reservation {
     this.fecha = data.fecha || null;
     this.hora = data.hora || null;
     this.cantidad = data.cantidad || null;
-    this.estado = data.estado || state.Reservas.PENDIENTE; // Valor por defecto: PENDIENTE
+    this.estado = data.estado || state.Reservas.RESERVADO; // Valor por defecto: RESERVADO
     this.nombre = data.nombre || null;
     this.telefono = data.telefono || null;
     this.correo = data.correo || null;

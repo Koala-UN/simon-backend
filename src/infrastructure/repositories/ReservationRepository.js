@@ -104,7 +104,7 @@ class ReservationRepository extends ReservationRepositoryInterface {
       reservationData.fecha,
       reservationData.hora,
       reservationData.cantidad,
-      reservationData.estado || state.Reservas.PENDIENTE,
+      reservationData.estado || state.Reservas.RESERVADO,
       reservationData.restauranteId,
       reservationData.nombre,
       reservationData.telefono,
