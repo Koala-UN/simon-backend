@@ -12,8 +12,8 @@ class RestaurantController {
     const newRestaurant = await restaurantService.createRestaurant(
       restaurantData,
       addressData,
+      cityId,
       suscriptionData,
-      cityId
     );
     res.status(201).json({
       status: "success",

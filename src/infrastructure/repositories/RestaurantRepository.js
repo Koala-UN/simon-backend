@@ -169,7 +169,9 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
     let query = `
       SELECT 
         r.*, 
-        d.*, 
+        d.id AS direccion_id,
+        d.ciudad_id AS direccion_ciudad_id,
+        d.direccion AS direccion_text,
         c.id AS ciudad_id, 
         c.nombre AS ciudad_nombre,
         dp.id AS departamento_id, 
@@ -322,6 +324,8 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
       fields.push("id_autenticacion = ?");
       values.push(updates.idAutenticacion);
     }
+    //TODO:
+    //ACTUALIZAR LAS FECHAS DE SUSCRIPCION SI SE SE RENUEVA ESTA
 
     if (fields.length === 0) {
       throw new Error("No hay campos para actualizar");
