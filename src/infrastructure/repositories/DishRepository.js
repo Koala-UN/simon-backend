@@ -1,7 +1,7 @@
 const db = require("../../database/connection");
 const DishRepositoryInterface = require("../../domain/interfaces/dish/RepositoryInterface");
 const Dish = require("../../domain/models/DishModel");
-const getImgUrl = require("../../utils/getImgUrl");
+const {getImgUrl} = require("../../utils/ImgCloudinary");
 class DishRepository extends DishRepositoryInterface {
   /**
    * Crea un nuevo platillo.
@@ -71,7 +71,7 @@ class DishRepository extends DishRepositoryInterface {
           existencias: row.existencias,
           restauranteId: row.restaurante_id,
           categoria: row.categoria,
-          imageUrl: getImgUrl(row.categoria, "dish"),
+          imageUrl: row.imageUrl || getImgUrl(row.categoria, "dish"),
         })
     );
   }
@@ -98,7 +98,7 @@ class DishRepository extends DishRepositoryInterface {
       existencias: row.existencias,
       restauranteId: row.restaurante_id,
       categoria: row.categoria,
-      imageUrl: getImgUrl(row.categoria, "dish"),
+      imageUrl:  row.imageUrl || getImgUrl(row.categoria, "dish"),
     });
   }
 
