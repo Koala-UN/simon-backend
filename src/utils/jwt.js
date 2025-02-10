@@ -5,11 +5,15 @@ const config = require('../config/config');
 // ayudame a crear una funcion que crea jwt, es para reutilizarla en el controlador de google
 const createJWT = (data) => {
   return jwt.sign({ ...data }, config.auth.jwtSecret, { expiresIn: config.auth.jwtExpiration });
-};const createCookie = (res, name, value) => {
+};
+
+// Función para crear una cookie
+const createCookie = (res, name, value) => {
+  const isProduction = process.env.NODE_ENV === 'production';
   res.cookie(name, value, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'Lax',
+    secure: isProduction, // Solo seguro en producción
+    sameSite: isProduction ? 'None' : 'Lax', // 'None' para producción, 'Lax' para desarrollo
     maxAge: config.auth.jwtExpiration
   });
 };
