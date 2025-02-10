@@ -35,7 +35,7 @@ class RestaurantService extends RestaurantServiceInterface {
     // Validar los datos del restaurante y la dirección
     //this._validateRestaurantData(restaurantData);
     this._validateAddressData(addressData);
-    this._validateSuscriptionData(suscriptionData);
+    //this._validateSuscriptionData(suscriptionData);
     // validar que el correo no exista
     const existingRestaurant = await this.findByEmail(restaurantData.correo);
     if (existingRestaurant) {
