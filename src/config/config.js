@@ -7,14 +7,14 @@ module.exports = {
         backendURL: process.env.BACKEND_URL || 'http://localhost:5000',
     },
     db: {
-        host: process.env.DB_HOST || 'localhost',
-        user: process.env.DB_USER || 'root',
-        password: process.env.DB_PASSWORD || 'Simon#123',
-        database: process.env.DB_NAME || 'mydb',
-        port: process.env.DB_PORT || 3306,
+        host: process.env.MYSQL_ADDON_HOST || 'localhost',
+        user: process.env.MYSQL_ADDON_USER || 'root',
+        password: process.env.MYSQL_ADDON_PASSWORD || 'Simon#123',
+        database: process.env.MYSQL_ADDON_DB || 'mydb',
+        port: process.env.MYSQL_ADDON_PORT || 3306,
     },
     mercadopago: {
-        accessToken: process.env.ACCESS_TOKEN_2||'undefined',
+        accessToken: process.env.ACCESS_TOKEN_MERCADO_PAGO||'undefined',
         publicKey: process.env.PUBLIC_KEY_PAGO_2||'undefined',
     },
     cloudinary: {
