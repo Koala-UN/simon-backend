@@ -10,8 +10,13 @@ const cookieParser = require("cookie-parser"); // Importar cookie-parser
 
 const {passport} = require('./config/authConfig');
 
+// const corsOptions = {
+//   origin: process.env.FRONTEND_URL, // Reemplaza con el origen de tu frontend
+//   credentials: true, // Permite el envío de cookies
+// };
+
 const corsOptions = {
-  origin: process.env.FRONTEND_URL, // Reemplaza con el origen de tu frontend
+  origin: true, // Permitir peticiones de cualquier lado
   credentials: true, // Permite el envío de cookies
 };
   
