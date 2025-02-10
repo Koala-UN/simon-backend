@@ -28,7 +28,7 @@ module.exports = {
         bcryptSaltRounds: parseInt(process.env.BCRYPT_SALT_ROUNDS),
         googleClientID: process.env.GOOGLE_CLIENT_ID,
         googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        googleCallbackURL: process.env.GOOGLE_CALLBACK_URL
+        googleCallbackURL: process.env.BACKEND_URL + process.env.GOOGLE_CALLBACK_URL
     }
 
 };
