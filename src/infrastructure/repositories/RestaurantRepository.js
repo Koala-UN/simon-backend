@@ -38,18 +38,24 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
         [cityId, addressData.direccion]
       );
       const addressId = addressResult.insertId;
-      const [suscriptionResult] = await connection.execute(
-        `INSERT INTO suscripcion (tipo, fecha_suscripcion, fecha_vencimiento) 
-         VALUES (?, CURRENT_DATE, 
-         CASE 
-           WHEN ? = 'MENSUAL' THEN DATE_ADD(CURRENT_DATE, INTERVAL 1 MONTH) 
-           WHEN ? = 'ANUAL' THEN DATE_ADD(CURRENT_DATE, INTERVAL 1 YEAR) 
-           ELSE NULL 
-         END)`,
-        [suscriptionData.tipo, suscriptionData.tipo, suscriptionData.tipo]
-      );
-
-      const suscriptionId = suscriptionResult.insertId;
+      let suscriptionId = null;
+      // Por el momento la creacion de la suscripcion en register se descarta,
+      // se debe considerar el hecho de que se debe registrarse el restaurante antes de la suscripcion, para evitar suscripciones sin restaurante
+      if(!suscriptionData || !suscriptionData.tipo){
+        suscriptionId = null;
+      } else {
+        const [suscriptionResult] = await connection.execute(
+          `INSERT INTO suscripcion (tipo, fecha_suscripcion, fecha_vencimiento) 
+           VALUES (?, CURRENT_DATE, 
+           CASE 
+             WHEN ? = 'MENSUAL' THEN DATE_ADD(CURRENT_DATE, INTERVAL 1 MONTH) 
+             WHEN ? = 'ANUAL' THEN DATE_ADD(CURRENT_DATE, INTERVAL 1 YEAR) 
+             ELSE NULL 
+           END)`,
+          [suscriptionData.tipo, suscriptionData.tipo, suscriptionData.tipo]
+        );
+        suscriptionId = suscriptionResult.insertId;
+      }
 
       restaurantData.categoria =
         restaurantData.categoria ?? category.Restaurante.CASUAL_DINING;
@@ -79,7 +85,7 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
         ciudadId: cityId,
         direccion: addressData.direccion,
       });
-      const suscription = new Suscription({
+      const suscription =suscriptionId==null? null: new Suscription({
         id: suscriptionId,
         tipo: suscriptionData.tipo,
         fechaSuscripcion: suscriptionData.inicio,
