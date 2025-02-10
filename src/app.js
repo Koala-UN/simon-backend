@@ -11,9 +11,9 @@ const cookieParser = require("cookie-parser"); // Importar cookie-parser
 const {passport} = require('./config/authConfig');
 
 const corsOptions = {
-    origin: 'http://localhost:5173', // Reemplaza con el origen de tu frontend
-    credentials: true, // Permite el envío de cookies
-  };
+  origin: process.env.FRONTEND_URL, // Reemplaza con el origen de tu frontend
+  credentials: true, // Permite el envío de cookies
+};
   
 app.use(cors(corsOptions));
 // Habilitar CORS
