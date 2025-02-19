@@ -61,8 +61,8 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
         restaurantData.categoria ?? category.Restaurante.CASUAL_DINING;
       // Insertar restaurante
       const [restaurantResult] = await connection.execute(
-        `INSERT INTO restaurante (nombre, correo, contrasena, telefono, estado, id_autenticacion, capacidad_reservas,categoria,descripcion, direccion_id,suscripcion_id)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO restaurante (nombre, correo, contrasena, telefono, estado, id_autenticacion, capacidad_reservas,categoria,descripcion, direccion_id,suscripcion_id, imageUrl)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           restaurantData.nombre,
           restaurantData.correo,
@@ -75,6 +75,7 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
           restaurantData.descripcion,
           addressId,
           suscriptionId,
+          restaurantData.imageUrl || getImgUrl(restaurantData.categoria, "restaurant"),
         ]
       );
 

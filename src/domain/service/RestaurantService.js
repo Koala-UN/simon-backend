@@ -7,6 +7,7 @@ const config = require("../../config/config");
 const authConfig = require("../../config/authConfig");
 const JWT = require("../../utils/jwt");
 const { sendVerificationEmail, sendEmail } = require("../../utils/email");
+const { uploadImg, getImgUrl } = require("../../utils/ImgCloudinary");
 
 class RestaurantService extends RestaurantServiceInterface {
   /**
@@ -42,6 +43,15 @@ class RestaurantService extends RestaurantServiceInterface {
       throw new AppError("El correo ya está en uso");
     }
 
+    // Manejar la subida de la imagen de perfil
+    if (restaurantData.fotoPerfil) {
+      const imageUrl = await uploadImg(restaurantData.correo, 'profile', restaurantData.fotoPerfil);
+      restaurantData.imageUrl = imageUrl;
+      // borrar fotoPerfil para que no se guarde en la base de datos
+      delete restaurantData.fotoPerfil;
+      console.log("imagen subida: ", imageUrl);
+    }
+
     const hashedPassword = await bcrypt.hash(
       restaurantData.contrasena,
       config.auth.bcryptSaltRounds
@@ -56,7 +66,9 @@ class RestaurantService extends RestaurantServiceInterface {
     );
     const verificationToken = JWT.createJWT({
       id: newRestaurant.id,
+      nombre: newRestaurant.nombre,
       correo: newRestaurant.correo,
+      imageUrl: newRestaurant.imageUrl || null,
     });
     console.log(
       "vamos a enviar el correo: ",
@@ -81,7 +93,7 @@ class RestaurantService extends RestaurantServiceInterface {
       throw new Error("Correo o contraseña incorrectos");
     }
 
-    const token = JWT.createJWT({ id: user.id, correo: user.correo });
+    const token = JWT.createJWT({ id: user.id, nombre:user.nombre, correo: user.correo , imageUrl: user.imageUrl || null });
     return { token };
   }
   verifyEmail = async (id) => {
@@ -336,6 +348,7 @@ class RestaurantService extends RestaurantServiceInterface {
       categoria: null,
       descripcion: null,
       contrasena: null,
+      imageUrl: profile.photos[0].value,
     };
 
     const addressData = {
@@ -352,7 +365,9 @@ class RestaurantService extends RestaurantServiceInterface {
     );
     const verificationToken = JWT.createJWT({
       id: newRestaurant.id,
+      nombre: newRestaurant.nombre,
       correo: newRestaurant.correo,
+      imageUrl: newRestaurant.imageUrl || getImgUrl("profile", "restaurant"),
     });
     await sendVerificationEmail(newRestaurant.correo, verificationToken);
     return newRestaurant;
