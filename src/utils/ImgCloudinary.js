@@ -201,9 +201,9 @@ function getOptimizedOptions(type, options) {
 }
 
 module.exports = {
+  getImgUrl,
   uploadImg,
   uploadMultipleImgs,
-  getImgUrl,
   upload,
   deleteImg,
   deleteImgsByEmailAndType,
