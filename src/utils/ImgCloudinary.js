@@ -1,7 +1,7 @@
 const cloudinary = require('cloudinary').v2;
 const multer = require('multer');
 // usar p-limit
-const pLimit = require('p-limit');
+// const pLimit = require('p-limit');
 const dish = require( '../../assets/json/dishMap.json');
 const restaurant =  require('../../assets/json/restaurantMap.json');
 
