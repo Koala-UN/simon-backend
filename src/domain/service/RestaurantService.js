@@ -7,7 +7,7 @@ const config = require("../../config/config");
 const authConfig = require("../../config/authConfig");
 const JWT = require("../../utils/jwt");
 const { sendVerificationEmail, sendEmail } = require("../../utils/email");
-const { uploadImg, getImgUrl } = require("../../utils/ImgCloudinary");
+const { uploadImg, getImgUrl, deleteImgsByEmailAndType, updateImg, uploadMultipleImgs } = require("../../utils/ImgCloudinary");
 
 class RestaurantService extends RestaurantServiceInterface {
   /**
@@ -45,10 +45,8 @@ class RestaurantService extends RestaurantServiceInterface {
 
     // Manejar la subida de la imagen de perfil
     if (restaurantData.fotoPerfil) {
-      const imageUrl = await uploadImg(restaurantData.correo, 'profile', restaurantData.fotoPerfil);
+      const imageUrl = await this.uploadImage( restaurantData.correo, "profile", restaurantData.fotoPerfil);
       restaurantData.imageUrl = imageUrl;
-      // borrar fotoPerfil para que no se guarde en la base de datos
-      delete restaurantData.fotoPerfil;
       console.log("imagen subida: ", imageUrl);
     }
 
@@ -64,19 +62,22 @@ class RestaurantService extends RestaurantServiceInterface {
       cityId,
       suscriptionData
     );
-    const verificationToken = JWT.createJWT({
+
+    const userData = {
       id: newRestaurant.id,
       nombre: newRestaurant.nombre,
       correo: newRestaurant.correo,
       imageUrl: newRestaurant.imageUrl || null,
-    });
+    }
+
+    const verificationToken = JWT.createJWT(userData);
     console.log(
       "vamos a enviar el correo: ",
       newRestaurant.correo,
       verificationToken
     );
     await sendVerificationEmail(newRestaurant.correo, verificationToken);
-    return newRestaurant;
+    return {newRestaurant, token: verificationToken, user: userData};
   }
 
   async login(data) {
@@ -92,10 +93,14 @@ class RestaurantService extends RestaurantServiceInterface {
     if (!isPasswordValid) {
       throw new Error("Correo o contraseña incorrectos");
     }
+    
+    const userData = { id: user.id, nombre: user.nombre, correo: user.correo, imageUrl: user.imageUrl || null }
 
-    const token = JWT.createJWT({ id: user.id, nombre:user.nombre, correo: user.correo , imageUrl: user.imageUrl || null });
-    return { token };
+    const token = JWT.createJWT(userData);
+    return { token, user: userData };
   }
+
+
   verifyEmail = async (id) => {
     await RestaurantRepository.updateRestaurant(id, { estado: "ACTIVO" });
   };
@@ -200,7 +205,26 @@ class RestaurantService extends RestaurantServiceInterface {
     if (!restaurantId) {
       throw new AppError("El ID del restaurante es requerido", 400);
     }
-    await RestaurantRepository.deleteRestaurant(restaurantId);
+    
+    try {
+
+      // debo obtener el correo del restaurante para eliminar las imagenes
+      const restaurant = await RestaurantRepository.findById(restaurantId);
+      if (!restaurant) {
+        throw new AppError("Restaurante no encontrado", 404);
+      }
+
+      // primero eliminar el restaurante de la base de datos
+      await RestaurantRepository.deleteRestaurant(restaurant.id);
+
+      // luego eliminar las imagenes de cloudinary
+      await deleteImgsByEmailAndType(restaurant.correo, 'all');
+
+      
+
+    } catch (error) {
+      throw new AppError("No se pudo eliminar el restaurante", 400);
+    }
   }
 
   /**
@@ -380,6 +404,70 @@ class RestaurantService extends RestaurantServiceInterface {
   async findByEmail(email) {
     return await RestaurantRepository.findByEmail(email);
   }
+
+  /**
+   * Sube una imagen y devuelve la URL de la imagen subida.
+   * @param {string} email - Correo electrónico del restaurante.
+   * @param {string} type - Tipo de imagen (e.g., 'profile').
+   * @param {string} image - Imagen a subir.
+   * @returns {Promise<string>} URL de la imagen subida.
+   */
+  async uploadImage(email, type, image) {   
+    console.log(email)
+    console.log(type)
+    console.log(image)
+    if (!email || !type || !image) {
+      throw new AppError("Todos los campos son obligatorios para subir la imagen", 400);
+    }
+    const imageUrl = await uploadImg(email, type, image);
+    return imageUrl;
+  }
+  // updateImage(restaurantId, imgUrl, file);
+  async updateImage(restaurantId, imgUrl, file) {
+    if (!restaurantId || !imgUrl || !file) {
+      throw new AppError("Todos los campos son obligatorios para actualizar la imagen", 400);
+    }
+    const restaurant = await RestaurantRepository.findById(restaurantId);
+    if (!restaurant) {
+      throw new AppError("Restaurante no encontrado", 404);
+    }
+    const imageUrl = await updateImg(restaurant.correo, imgUrl, file);
+    
+    return imageUrl;
+  }
+
+  // deleteImage
+  async deleteImage(restaurantId, imgUrl) {
+    if (!restaurantId || !imgUrl) {
+      throw new AppError("Todos los campos son obligatorios para eliminar la imagen", 400);
+    }
+    const restaurant = await RestaurantRepository.findById(restaurantId);
+    if (!restaurant) {
+      throw new AppError("Restaurante no encontrado", 404);
+    }
+    await deleteImgsByEmailAndType(restaurant.correo, imgUrl);
+  }
+
+
+  // uploadMultipleImages(restaurantId, type, files);
+  async uploadMultipleImages(restaurantId, type, files) {
+    if (!restaurantId || !type || !files) {
+      throw new AppError("Todos los campos son obligatorios para subir las imagenes", 400);
+    }
+    const restaurant = await RestaurantRepository.findById(restaurantId);
+    if (!restaurant) {
+      throw new AppError("Restaurante no encontrado", 404);
+    }
+    // logica para subir multiples imagenes, usar uploadMultipleImgs
+    const imageUrls = await uploadMultipleImgs(restaurant.correo, type, files);
+    urls.forEach(url => {
+      imageUrls.push(url);
+    });
+
+    return imageUrls;
+
+  }
+
 }
 
 module.exports = new RestaurantService();

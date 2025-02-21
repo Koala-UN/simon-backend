@@ -9,11 +9,18 @@ class DishService extends DishServiceInterface {
    * @returns {Promise<Dish>} El platillo creado.
    */
   async createDish(dishData) {
-    // Validar los datos del platillo
-    this._validateDishData(dishData);
+    try {
+      // Validar los datos del platillo
+      console.log("este es el dishDATA:  ", dishData);
+      //this._validateDishData(dishData);
+      console.log("datos validados");
 
-    // Crear el platillo en el repositorio
-    return await dishRepository.create(dishData);
+      // Crear el platillo en el repositorio
+      console.log("creando platillo");
+      return await dishRepository.create(dishData);
+    } catch (error) {
+      throw new AppError(error.message, error.statusCode || 500);
+    }
   }
 
   /**
@@ -31,6 +38,7 @@ class DishService extends DishServiceInterface {
     ];
     requiredFields.forEach((field) => {
       if (!dishData[field]) {
+        console.log("campo requerido: ", field);  
         throw new AppError(`El campo ${field} es obligatorio`, 400);
       }
     });

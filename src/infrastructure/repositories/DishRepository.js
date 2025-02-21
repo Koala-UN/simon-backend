@@ -9,25 +9,29 @@ class DishRepository extends DishRepositoryInterface {
    * @returns {Promise<Dish>} El platillo creado.
    */
   async create(dishData) {
-    const query = `
-      INSERT INTO platillo (nombre, descripcion, precio, existencias,categoria, restaurante_id)
-      VALUES (?, ?, ?, ?, ?,?)
-    `;
-    const [result] = await db.execute(query, [
-      dishData.nombre,
-      dishData.descripcion,
-      dishData.precio,
-      dishData.existencias,
-      dishData.categoria,
-      dishData.restauranteId,
-    ]);
+    try {
+      const query = `
+        INSERT INTO platillo (nombre, descripcion, precio, existencias,categoria, restaurante_id)
+        VALUES (?, ?, ?, ?, ?,?)
+      `;
+      const [result] = await db.execute(query, [
+        dishData.nombre,
+        dishData.descripcion,
+        dishData.precio,
+        dishData.existencias,
+        dishData.categoria,
+        dishData.restauranteId,
+      ]);
 
-    const newDish = new Dish({
-      id: result.insertId,
-      ...dishData,
-    });
+      const newDish = new Dish({
+        id: result.insertId,
+        ...dishData,
+      });
 
-    return newDish;
+      return newDish;
+    } catch (error) {
+      throw new AppError("Error al crear el platillo", 500, error);
+    }
   }
 
   /**

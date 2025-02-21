@@ -1,10 +1,10 @@
 const express = require('express');
 const dishController = require('../controllers/DishController');
-
+const { upload } = require('../../utils/ImgCloudinary');
 const router = express.Router();
 
 // Rutas de platillos
-router.post('/', dishController.createDish);
+router.post('/',upload.single("imageUrl"), dishController.createDish);
 router.delete('/:dishId', dishController.deleteDish);
 router.get('/restaurant/:restauranteId', dishController.getAllDishesByRestaurant);
 router.get('/:dishId', dishController.getDishById);

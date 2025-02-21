@@ -277,6 +277,7 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
       throw error;
     } finally {
       connection.release();
+      //retornar el correo
     }
   }
   /**

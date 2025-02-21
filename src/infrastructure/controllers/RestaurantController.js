@@ -72,7 +72,16 @@ class RestaurantController {
    */
   deleteRestaurant = asyncHandler(async (req, res) => {
     const { restaurantId } = req.params;
-    await restaurantService.deleteRestaurant(restaurantId);
+    try {
+          await restaurantService.deleteRestaurant(restaurantId);
+    } catch (error) {
+      res.status(400).json({
+        status: "error",
+        message: "No se pudo eliminar el restaurante",
+      });
+    }    
+
+
     res.status(200).json({
       status: "success",
       message: "Restaurante eliminado correctamente",
@@ -115,10 +124,12 @@ class RestaurantController {
       restaurantData.fotoPerfil = req.file;
     }
 
-    const newRestaurant = await restaurantService.register(restaurantData, addressData, cityId, suscriptionData);
+    const {newRestaurant, token, user} = await restaurantService.register(restaurantData, addressData, cityId, suscriptionData);
+
+    JWT.createCookie(res, "token", token);
     res.status(201).json({
       status: "success",
-      data: newRestaurant.toJSON(),
+      data:  {user: user, isAuthenticated: true},
     });
   });
 
@@ -142,6 +153,7 @@ class RestaurantController {
     JWT.createCookie(res,"token", result.token);
     res.status(200).json({
       status: "success",
+      data: {user: result.user, isAuthenticated: true},
     });
   });
 
@@ -199,6 +211,37 @@ class RestaurantController {
     const { id, correo } = req.user;
     JWT.createJWTCookie(res, { id, correo });
     res.redirect(`${process.env.FRONTEND_URL}/`); // Redirigir al frontend usando la variable de entorno
+  });
+
+  uploadImage = asyncHandler(async (req, res) => {
+    const { restaurantId, type } = req.params;
+    const file = req.file;
+    const imageUrl = await restaurantService.uploadImage(restaurantId, type, file);
+    res.status(200).json({ status: 'success', data: { imageUrl:imageUrl } });
+  });
+
+  // updateImage
+  updateImage = asyncHandler(async (req, res) => {
+    const { restaurantId, imgUrl } = req.params;
+    const file = req.file;
+    const imageUrl = await restaurantService.updateImage(restaurantId, imgUrl, file);
+    res.status(200).json({ status: 'success', data: { imageUrl } });
+  });
+
+  // deleteImage
+  deleteImage = asyncHandler(async (req, res) => {
+    const { restaurantId, imgUrl } = req.params;
+    await restaurantService.deleteImage(restaurantId, imgUrl);
+    res.status(200).json({ status: 'success', message: 'Imagen eliminada exitosamente' });
+  });
+
+
+  //  uploadMultipleImages
+  uploadMultipleImages = asyncHandler(async (req, res) => {
+    const { restaurantId, type } = req.params;
+    const files = req.files;
+    const imageUrls = await restaurantService.uploadMultipleImages(restaurantId, type, files);
+    res.status(200).json({ status: 'success', data: { imageUrls } });
   });
   
 }

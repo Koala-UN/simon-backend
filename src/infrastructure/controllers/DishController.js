@@ -8,12 +8,24 @@ class DishController {
    * @param {Object} res - Objeto de respuesta.
    */
   createDish = asyncHandler(async (req, res) => {
-    const newDish = await dishService.createDish(req.body);
-    res.status(201).json({
-      status: "success",
-      data: newDish.toJSON(),
-    });
+    try {
+      //quiero imprimir todo para ver donde está imageUrl
+      console.log(req.body);
+      
+      const newDish = await dishService.createDish(req.body);
+      res.status(201).json({
+        status: "success",
+        data: newDish.toJSON(),
+      });
+    } catch (error) {
+      res.status(500).json({
+        status: "error",
+        message: error.message,
+      });
+    }
   });
+
+  
 
   /**
    * Maneja la solicitud DELETE /platillos/:dishId.

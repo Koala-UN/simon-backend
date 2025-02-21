@@ -45,11 +45,17 @@ router.post('/rec-password', restaurantController.recoverPassword);
 
 router.get('/verify-email', restaurantController.verifyEmail);
 
-router.get('/:restaurantId', restaurantController.getRestaurantById);
-router.get('/', restaurantController.getAllRestaurants);
+// Rutas para Imágenes
+router.post('/:restaurantId/img/:type', upload.single('image'), restaurantController.uploadImage); // Subir una imagen
+router.put('/:restaurantId/img/:imgUrl', upload.single('image'), restaurantController.updateImage); // Actualizar una imagen
+router.delete('/:restaurantId/img/:imgUrl', restaurantController.deleteImage); // Borrar una imagen
+router.post('/:restaurantId/images/:type', upload.array('images', 10), restaurantController.uploadMultipleImages); // Subir múltiples imágenes
 
-router.delete('/:restaurantId', restaurantController.deleteRestaurant); // Ruta para eliminar restaurante
-router.patch('/:restaurantId', restaurantController.updateRestaurant); // Ruta para actualizar restaurante
+// Rutas para Restaurantes
+router.get('/:restaurantId', restaurantController.getRestaurantById); // Obtener un restaurante por ID
+router.patch('/:restaurantId', restaurantController.updateRestaurant); // Actualizar un restaurante
+router.delete('/:restaurantId', restaurantController.deleteRestaurant); // Eliminar un restaurante
+router.get('/', restaurantController.getAllRestaurants); // Obtener todos los restaurantes
 
 router.post('/register', upload.single('fotoPerfil'), restaurantController.registerRestaurant);
 router.post('/login', restaurantController.loginRestaurant);
