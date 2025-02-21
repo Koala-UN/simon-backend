@@ -62,22 +62,38 @@ async function uploadImg(email, type, file) {
 }
 
 
-// Función para subir múltiples imágenes utilizando p-limit
+// // Función para subir múltiples imágenes utilizando p-limit
+// /**
+//  * 
+//  * @param {string} email - Correo del restaurante
+//  * @param {string} type - Tipo de imagen, ya sea 'profile' (profile photo) o dish o drink o restaurant (fotos del restaurante) según el caso
+//  * @param {Array<File>} files - Array de archivos de imagen
+//  * @returns {Promise<Array<string>>} - Array de URLs de las imágenes subidas
+//  */
+// async function uploadMultipleImgs(email, type, files) {
+  
+//   const limit = pLimit(5); // Limitar a 5 peticiones concurrentes
+//   const uploadPromises = files.map(file => {
+//     return limit(async () => {
+//       const imageUrl = await uploadImg(email, type, file);
+//       return imageUrl;
+//     });
+//   });
+
+//   return Promise.all(uploadPromises);
+// }
+
 /**
- * 
+ * Función para subir múltiples imágenes sin usar p-limit
  * @param {string} email - Correo del restaurante
  * @param {string} type - Tipo de imagen, ya sea 'profile' (profile photo) o dish o drink o restaurant (fotos del restaurante) según el caso
  * @param {Array<File>} files - Array de archivos de imagen
  * @returns {Promise<Array<string>>} - Array de URLs de las imágenes subidas
  */
 async function uploadMultipleImgs(email, type, files) {
-  
-  const limit = pLimit(5); // Limitar a 5 peticiones concurrentes
-  const uploadPromises = files.map(file => {
-    return limit(async () => {
-      const imageUrl = await uploadImg(email, type, file);
-      return imageUrl;
-    });
+  const uploadPromises = files.map(async (file) => {
+    const imageUrl = await uploadImg(email, type, file);
+    return imageUrl;
   });
 
   return Promise.all(uploadPromises);
