@@ -27,6 +27,7 @@ class RestaurantController {
    */
   getRestaurantById = asyncHandler(async (req, res) => {
     const { restaurantId } = req.params;
+    console.log("restaurantId", restaurantId);
     const restaurant = await restaurantService.getRestaurantById(restaurantId);
     res.status(200).json({
       status: "success",
@@ -251,6 +252,14 @@ class RestaurantController {
     const files = req.files;
     const imageUrls = await restaurantService.uploadMultipleImages(restaurantId, type, files);
     res.status(200).json({ status: 'success', data: { imageUrls } });
+  });
+
+
+  // getImages
+  getImages = asyncHandler(async (req, res) => {
+    const { restaurantId } = req.params;
+    const images = await restaurantService.getImages(restaurantId);
+    res.status(200).json({ status: 'success', data: { images } });
   });
   
 }

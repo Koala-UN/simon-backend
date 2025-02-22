@@ -53,6 +53,7 @@ router.put('/:restaurantId/img/:imgUrl', upload.single('image'), restaurantContr
 router.delete('/:restaurantId/img/:imgUrl', restaurantController.deleteImage); // Borrar una imagen
 router.post('/:restaurantId/images/:type', upload.array('images', 10), restaurantController.uploadMultipleImages); // Subir múltiples imágenes
 
+
 // Rutas para Restaurantes
 router.get('/:restaurantId', restaurantController.getRestaurantById); // Obtener un restaurante por ID
 router.patch('/:restaurantId', restaurantController.updateRestaurant); // Actualizar un restaurante

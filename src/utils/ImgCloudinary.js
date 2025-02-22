@@ -183,6 +183,32 @@ async function updateImg(url, email, type, file) {
   });
 }
 
+/**
+ * Función para obtener imágenes de Cloudinary basadas en el correo y el tipo
+ * @param {string} email - Correo del restaurante
+ * @param {string} type - Tipo de imagen, ya sea 'profile', 'dish', 'drink', 'restaurant' o '*' para obtener todas
+ * @returns {Promise<Array<string>>} - Array de URLs de las imágenes obtenidas
+ */
+async function getImagesByEmailAndType(email, type) {
+  const user = email.split("@")[0]; // Obtenemos el nombre del usuario
+  const tag = user;
+
+  return new Promise((resolve, reject) => {
+    cloudinary.api.resources_by_tag(tag, (error, result) => {
+      if (error) {
+        reject(new Error('Error al obtener las imágenes de Cloudinary'));
+      } else {
+        const resources = result.resources;
+        const urls = resources
+          .filter(resource => type === '*' || type === 'all' || resource.tags.includes(type))
+          .map(resource => resource.url);
+
+        resolve(urls);
+      }
+    });
+  });
+}
+
 
 // hagamos una funcion que me de todas las opciones de optimizacion y crop  y esas cosas
 // para que no se me olviden, la funcion es esta:
@@ -209,5 +235,6 @@ module.exports = {
   deleteImgsByEmailAndType,
   deleteImgByUrl,
   updateImg,
+  getImagesByEmailAndType
 
 };

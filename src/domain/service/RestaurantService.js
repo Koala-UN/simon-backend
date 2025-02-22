@@ -7,7 +7,7 @@ const config = require("../../config/config");
 const authConfig = require("../../config/authConfig");
 const JWT = require("../../utils/jwt");
 const { sendVerificationEmail, sendEmail } = require("../../utils/email");
-const { uploadImg, getImgUrl, deleteImgsByEmailAndType, updateImg, uploadMultipleImgs } = require("../../utils/ImgCloudinary");
+const { uploadImg, getImgUrl, deleteImgsByEmailAndType, updateImg, uploadMultipleImgs, getImagesByEmailAndType } = require("../../utils/ImgCloudinary");
 
 class RestaurantService extends RestaurantServiceInterface {
   /**
@@ -44,40 +44,48 @@ class RestaurantService extends RestaurantServiceInterface {
     }
 
     // Manejar la subida de la imagen de perfil
+    let imageUrlUploaded = false;
     if (restaurantData.fotoPerfil) {
-      const imageUrl = await this.uploadImage( restaurantData.correo, "profile", restaurantData.fotoPerfil);
+      const imageUrl = await uploadImg( restaurantData.correo, "profile", restaurantData.fotoPerfil);
       restaurantData.imageUrl = imageUrl;
       console.log("imagen subida: ", imageUrl);
+      imageUrlUploaded = true;
     }
 
-    const hashedPassword = await bcrypt.hash(
-      restaurantData.contrasena,
-      config.auth.bcryptSaltRounds
-    );
-    restaurantData.contrasena = hashedPassword;
-    restaurantData.estado = "NO_VERIFICADO"; // Estado inicial
-    const newRestaurant = await RestaurantRepository._create(
-      restaurantData,
-      addressData,
-      cityId,
-      suscriptionData
-    );
-
-    const userData = {
-      id: newRestaurant.id,
-      nombre: newRestaurant.nombre,
-      correo: newRestaurant.correo,
-      imageUrl: newRestaurant.imageUrl || null,
+    try {
+      const hashedPassword = await bcrypt.hash(
+        restaurantData.contrasena,
+        config.auth.bcryptSaltRounds
+      );
+      restaurantData.contrasena = hashedPassword;
+      restaurantData.estado = "NO_VERIFICADO"; // Estado inicial
+      const newRestaurant = await RestaurantRepository._create(
+        restaurantData,
+        addressData,
+        cityId,
+        suscriptionData
+      );
+      const userData = {
+        id: newRestaurant.id,
+        nombre: newRestaurant.nombre,
+        correo: newRestaurant.correo,
+        imageUrl: newRestaurant.imageUrl || null,
+      }
+  
+      const verificationToken = JWT.createJWT(userData);
+      // console.log(
+      //   "vamos a enviar el correo: ",
+      //   newRestaurant.correo,
+      //   verificationToken
+      // );
+      //await sendVerificationEmail(newRestaurant.correo, verificationToken);
+      return {newRestaurant, token: verificationToken, user: userData};
+    } catch (error) {
+      if (imageUrlUploaded) {
+        await deleteImgsByEmailAndType(restaurantData.correo, 'profile');
+      }
+      throw error;
     }
-
-    const verificationToken = JWT.createJWT(userData);
-    // console.log(
-    //   "vamos a enviar el correo: ",
-    //   newRestaurant.correo,
-    //   verificationToken
-    // );
-    //await sendVerificationEmail(newRestaurant.correo, verificationToken);
-    return {newRestaurant, token: verificationToken, user: userData};
   }
 
   // funcion para especificamente enviar el correo de verificacion
@@ -517,6 +525,19 @@ class RestaurantService extends RestaurantServiceInterface {
 
     return imageUrls;
 
+  }
+
+  // getImages
+  async getImages(restaurantId) {
+    if (!restaurantId) {
+      throw new AppError("El ID del restaurante es requerido", 400);
+    }
+    const restaurant = await RestaurantRepository.findById(restaurantId);
+    if (!restaurant) {
+      throw new AppError("Restaurante no encontrado", 404);
+    }
+    const images = await getImagesByEmailAndType(restaurant.correo, 'restaurant');
+    return images;
   }
 
 }
