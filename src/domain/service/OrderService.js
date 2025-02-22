@@ -38,6 +38,7 @@ class OrderService extends OrderServiceInterface {
       );
     }
   }
+
   /**
    * Actualiza el estado de un platillo en un pedido.
    * @param {number} pedidoId - ID del pedido.
@@ -103,10 +104,10 @@ class OrderService extends OrderServiceInterface {
   /**
    * Crea un nuevo pedido y lo asocia con los platillos indicados.
    *
-   * @param {Object} orderData - Datos del pedido, incluyendo mesaId.
+   * @param {Object} orderData - Datos del pedido, que debe incluir 'nombre_cliente'.
    * @param {Array} platillos - Lista de objetos con platillos, cada uno con:
    *   - platilloId: ID del platillo.
-   *   - cantidad: Cantidad de este platillo.
+   *   - cantidad: Cantidad del platillo.
    * @returns {Promise<Object>} - Detalles del pedido creado.
    * @throws {Error} - Si los datos son inválidos o ocurre un error en el repositorio.
    */
