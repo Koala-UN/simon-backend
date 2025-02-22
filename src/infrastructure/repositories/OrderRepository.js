@@ -15,7 +15,7 @@ class OrderRepository extends OrderRepositoryInterface {
    * - id: El identificador del pedido.
    * - fecha: La fecha del pedido.
    * - hora: La hora del pedido.
-   * - mesa_id: El identificador de la mesa asociada al pedido.
+   * - nombre_cliente: El nombre del cliente asociado al pedido.
    * - estado: El estado del pedido, que puede ser 'PENDIENTE' o 'ENTREGADO'.
    * - total: El total del pedido, que es la suma de los totales de los platillos asociados al pedido.
    */
@@ -26,7 +26,7 @@ class OrderRepository extends OrderRepositoryInterface {
                 p.id, 
                 p.fecha, 
                 p.hora, 
-                p.mesa_id, 
+                p.nombre_cliente,
                 CASE 
                     WHEN COUNT(pp.pedido_id) = 0 THEN 'PENDIENTE'
                     WHEN SUM(pp.estado = 'PENDIENTE') > 0 THEN 'PENDIENTE'
@@ -35,9 +35,9 @@ class OrderRepository extends OrderRepositoryInterface {
                 IFNULL(SUM(pp.total), 0) AS total
             FROM pedido p
             LEFT JOIN platillo_has_pedido pp ON p.id = pp.pedido_id
-            JOIN mesa m ON p.mesa_id = m.id
-            WHERE m.restaurante_id = ?
-            GROUP BY p.id, p.fecha, p.hora, p.mesa_id
+            JOIN platillo pl ON pp.platillo_id = pl.id
+            WHERE pl.restaurante_id = ?
+            GROUP BY p.id, p.fecha, p.hora, p.nombre_cliente
         `,
       [restaurantId]
     );
@@ -121,12 +121,12 @@ class OrderRepository extends OrderRepositoryInterface {
 
   /**
    * Crea un nuevo pedido y asocia platillos.
-   * @param {Object} orderData - Datos del pedido.
+   * @param {Object} orderData - Datos del pedido (se espera que contenga 'nombre_cliente').
    * @param {Array} platillos - Lista de platillos.
    * @returns {Promise<Object>} - Detalles del pedido creado.
    */
   async create(orderData, platillos) {
-    const { mesaId } = orderData;
+    const { nombre_cliente } = orderData;
 
     if (!platillos || platillos.length === 0) {
       throw new AppError("El pedido debe contener al menos un platillo.", 400);
@@ -136,10 +136,10 @@ class OrderRepository extends OrderRepositoryInterface {
     try {
       await connection.beginTransaction();
 
-      // Crear pedido
+      // Crear pedido usando nombre_cliente en lugar de mesa_id
       const [pedidoResult] = await connection.query(
-        `INSERT INTO pedido (fecha, hora, mesa_id) VALUES (CURRENT_DATE(), CURRENT_TIME(), ?)`,
-        [mesaId]
+        `INSERT INTO pedido (fecha, hora, nombre_cliente) VALUES (CURRENT_DATE(), CURRENT_TIME(), ?)`,
+        [nombre_cliente]
       );
       const pedidoId = pedidoResult.insertId;
 
@@ -193,7 +193,7 @@ class OrderRepository extends OrderRepositoryInterface {
 
       await connection.commit();
 
-      return { id: pedidoId, mesaId, estado: state.Pedido.PENDIENTE };
+      return { id: pedidoId, nombre_cliente, estado: state.Pedido.PENDIENTE };
     } catch (error) {
       await connection.rollback();
       throw new AppError(`Error al crear el pedido: ${error.message}`, 500);
