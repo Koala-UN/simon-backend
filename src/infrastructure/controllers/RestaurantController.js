@@ -185,15 +185,24 @@ class RestaurantController {
     }
   });
 
+  verifyEmailSend = asyncHandler(async (req, res) => {
+    const { correo } = req.body;
+    
+    await restaurantService.verifyEmailSend(correo);
+    res.status(200).json({ status: 'success', message: 'Correo de verificación enviado exitosamente' });
+  });
+
   changePassword = asyncHandler(async (req, res) => {
-    const { oldPassword, newPassword } = req.body;
+    const { currentPassword, newPassword } = req.body;
+
     const { correo } = req.user;
-    await restaurantService.changePassword(correo, oldPassword, newPassword);
+    await restaurantService.changePassword(correo, currentPassword, newPassword);
     res.status(200).json({ status: 'success', message: 'Contraseña actualizada exitosamente' });
   });
 
   recoverPassword = asyncHandler(async (req, res) => {
     const { correo } = req.body;
+    console.log('por aquiiiiiiis--iii ** __--> req.body: ', req.body, "    correo: ", correo);
     await restaurantService.recoverPassword(correo);
     res.status(200).json({ status: 'success', message: 'Correo de recuperación de contraseña enviado exitosamente' });
   });

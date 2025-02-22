@@ -11,8 +11,8 @@ router.post('/', restaurantController.createRestaurant);
 
 
 router.get('/protected',authMiddleware, (req, res) => {
-    console.log('Usuario autenticado y request en /protected:', req.user);
-    res.json({ message: 'Esta es una ruta protegida', data: req.user });
+  console.log('Usuario autenticado y request en /protected:', req.user);
+  res.json({ message: 'Esta es una ruta protegida', data: req.user });
 });
 // Ruta para verificar el estado de autenticación
 router.get('/auth-status', (req, res) => {
@@ -34,6 +34,7 @@ router.get('/auth-status', (req, res) => {
 router.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 router.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/login', session: false }), restaurantController.googleCallback);
 
+
 // Ruta para cambiar la contraseña
 router.post('/chg-password', authMiddleware, restaurantController.changePassword);
 
@@ -41,12 +42,13 @@ router.post('/chg-password', authMiddleware, restaurantController.changePassword
 router.post('/has-password', restaurantController.hasPassword);
 
 // Ruta para recuperar la contraseña
-router.post('/rec-password', restaurantController.recoverPassword);
-
+router.post('/verify-email-send', restaurantController.verifyEmailSend);
 router.get('/verify-email', restaurantController.verifyEmail);
+router.post('/rec-password/', restaurantController.recoverPassword);
 
 // Rutas para Imágenes
 router.post('/:restaurantId/img/:type', upload.single('image'), restaurantController.uploadImage); // Subir una imagen
+
 router.put('/:restaurantId/img/:imgUrl', upload.single('image'), restaurantController.updateImage); // Actualizar una imagen
 router.delete('/:restaurantId/img/:imgUrl', restaurantController.deleteImage); // Borrar una imagen
 router.post('/:restaurantId/images/:type', upload.array('images', 10), restaurantController.uploadMultipleImages); // Subir múltiples imágenes

@@ -15,8 +15,14 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
    */
   async findByEmail(correo) {
     const query = `SELECT * FROM restaurante WHERE correo = ?`;
-    const [rows] = await db.execute(query, [correo]);
-    return rows[0];
+    console.log("aqui vamos a buscar el correo: ", correo);
+    try {
+      const [rows] = await db.execute(query, [correo]);
+      return rows[0];
+    } catch (error) {
+      console.error("Error executing query:", error);
+      throw new AppError("Error finding restaurant by email", 500);
+    }
   }
   /**
    * Crea un nuevo restaurante con su dirección asociada.
