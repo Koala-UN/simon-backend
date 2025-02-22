@@ -50,7 +50,7 @@ async function uploadImg(email, type, file) {
 
     const stream = cloudinary.uploader.upload_stream(options, (error, result) => {
       if (error) {
-        reject(new Error('Error al subir la imagen a Cloudinary'));
+        reject(new Error('Error al subir la imagen a Cloudinary' + error));
       } else {
         resolve(result.url); // Resolvemos la promesa con la URL de la imagen subida
       }
