@@ -6,7 +6,11 @@
   "scripts": {
     "test": "jest --coverage",
     "start": "node src/index.js",
-    "dev": "nodemon src/index.js"
+    "dev": "nodemon src/index.js",
+    "vercel-build": "echo 'vercel-build por aqui!! '"
+  },
+  "engines": {
+    "node": "v22.12.0"
   },
   "author": "Brosgor",
   "license": "ISC",
