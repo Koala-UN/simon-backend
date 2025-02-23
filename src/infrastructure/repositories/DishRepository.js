@@ -2,6 +2,8 @@ const db = require("../../database/connection");
 const DishRepositoryInterface = require("../../domain/interfaces/dish/RepositoryInterface");
 const Dish = require("../../domain/models/DishModel");
 const {getImgUrl} = require("../../utils/ImgCloudinary");
+// AppError
+const AppError = require("../../domain/exception/AppError");
 class DishRepository extends DishRepositoryInterface {
   /**
    * Crea un nuevo platillo.
@@ -11,17 +13,19 @@ class DishRepository extends DishRepositoryInterface {
   async create(dishData) {
     try {
       const query = `
-        INSERT INTO platillo (nombre, descripcion, precio, existencias,categoria, restaurante_id)
-        VALUES (?, ?, ?, ?, ?,?)
+        INSERT INTO platillo (nombre, descripcion, precio, existencias,categoria, restaurante_id, imageUrl)
+        VALUES (?, ?, ?, ?, ?,?, ?)
       `;
-      const [result] = await db.execute(query, [
+      const finalData = [
         dishData.nombre,
         dishData.descripcion,
         dishData.precio,
         dishData.existencias,
         dishData.categoria,
         dishData.restauranteId,
-      ]);
+        dishData.imageUrl || getImgUrl(dishData.categoria, "dish"),
+      ];
+      const [result] = await db.execute(query, finalData);
 
       const newDish = new Dish({
         id: result.insertId,
@@ -52,7 +56,7 @@ class DishRepository extends DishRepositoryInterface {
    */
   async findAllByRestaurant(restauranteId, category) {
     let query = `
-      SELECT id, nombre, descripcion, precio, existencias, categoria, restaurante_id
+      SELECT id, nombre, descripcion, precio, existencias, categoria, restaurante_id, imageUrl 
       FROM platillo
       WHERE restaurante_id = ?
     `;
@@ -64,6 +68,7 @@ class DishRepository extends DishRepositoryInterface {
     }
 
     const [rows] = await db.execute(query, params);
+    // console.log("ROWS DE DISHES", rows);
 
     return rows.map(
       (row) =>
@@ -86,7 +91,7 @@ class DishRepository extends DishRepositoryInterface {
    * @returns {Promise<Dish>} El platillo encontrado.
    */
   async findById(dishId) {
-    const query = `SELECT id, nombre, descripcion, precio, existencias,categoria, restaurante_id FROM platillo WHERE id = ?`;
+    const query = `SELECT id, nombre, descripcion, precio, existencias,categoria, restaurante_id, imageUrl FROM platillo WHERE id = ?`;
     const [rows] = await db.execute(query, [dishId]);
     if (rows.length === 0) {
       throw new AppError(`Platillo con ID ${dishId} no encontrado`, 404);
@@ -140,6 +145,10 @@ class DishRepository extends DishRepositoryInterface {
       fields.push("categoria = ?");
       values.push(dishData.categoria);
     }
+    if (dishData.imageUrl !== undefined) {
+      fields.push("imageUrl = ?");
+      values.push(dishData.imageUrl);
+    }
     if (fields.length === 0) {
       throw new AppError("No hay campos para actualizar", 400);
     }
@@ -149,7 +158,11 @@ class DishRepository extends DishRepositoryInterface {
     SET ${fields.join(", ")}
     WHERE id = ?
   `;
-    await db.execute(query, [...values, dishId]);
+    const [rows] = await db.execute(query, [...values, dishId]);
+    if (rows.affectedRows === 0) {
+      throw new AppError(`Platillo con ID ${dishId} no encontrado`, 404);
+    }
+
   }
 }
 

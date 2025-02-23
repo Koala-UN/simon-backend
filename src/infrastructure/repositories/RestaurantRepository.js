@@ -15,8 +15,14 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
    */
   async findByEmail(correo) {
     const query = `SELECT * FROM restaurante WHERE correo = ?`;
-    const [rows] = await db.execute(query, [correo]);
-    return rows[0];
+    console.log("aqui vamos a buscar el correo: ", correo);
+    try {
+      const [rows] = await db.execute(query, [correo]);
+      return rows[0];
+    } catch (error) {
+      console.error("Error executing query:", error);
+      throw new AppError("Error finding restaurant by email", 500);
+    }
   }
   /**
    * Crea un nuevo restaurante con su dirección asociada.
@@ -60,23 +66,26 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
       restaurantData.categoria =
         restaurantData.categoria ?? category.Restaurante.CASUAL_DINING;
       // Insertar restaurante
+      const finalData = [
+        restaurantData.nombre,
+        restaurantData.correo,
+        restaurantData.contrasena || null,
+        restaurantData.telefono,
+        restaurantData.estado,
+        restaurantData.idAutenticacion || null,
+        restaurantData.capacidadReservas,
+        restaurantData.categoria,
+        restaurantData.descripcion,
+        addressId,
+        suscriptionId,
+        restaurantData.imageUrl || getImgUrl(restaurantData.categoria, "restaurant"),
+      ];
+      console.log("finalData al registrar: ", finalData);
       const [restaurantResult] = await connection.execute(
         `INSERT INTO restaurante (nombre, correo, contrasena, telefono, estado, id_autenticacion, capacidad_reservas,categoria,descripcion, direccion_id,suscripcion_id, imageUrl)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          restaurantData.nombre,
-          restaurantData.correo,
-          restaurantData.contrasena || null,
-          restaurantData.telefono,
-          restaurantData.estado,
-          restaurantData.idAutenticacion || null,
-          restaurantData.capacidadReservas,
-          restaurantData.categoria,
-          restaurantData.descripcion,
-          addressId,
-          suscriptionId,
-          restaurantData.imageUrl || getImgUrl(restaurantData.categoria, "restaurant"),
-        ]
+        
+        finalData
       );
 
       await connection.commit();
@@ -107,6 +116,70 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
     }
   }
 
+
+
+
+// const query = `
+//           SELECT r.*, d.*, c.id AS ciudad_id, c.nombre AS ciudad_nombre, dp.id AS departamento_id, dp.nombre AS departamento_nombre, p.id AS pais_id, p.nombre AS pais_nombre,
+//               s.id AS suscripcion_id,
+//         s.tipo AS suscripcion_tipo,
+//         s.fecha_suscripcion AS suscripcion_fecha_suscripcion,
+//         s.fecha_vencimiento AS suscripcion_fecha_vencimiento
+          
+//           FROM restaurante r
+//           JOIN suscripcion s ON r.suscripcion_id = s.id
+//           JOIN direccion d ON r.direccion_id = d.id
+//           JOIN ciudad c ON d.ciudad_id = c.id
+//           JOIN departamento dp ON c.departamento_id = dp.id
+//           JOIN pais p ON dp.pais_id = p.id
+//           WHERE r.id = ?
+//         `;
+
+
+
+// async findById(restaurantId) {
+//   const query = `
+//         SELECT r.*, d.*, c.id AS ciudad_id, c.nombre AS ciudad_nombre, dp.id AS departamento_id, dp.nombre AS departamento_nombre, p.id AS pais_id, p.nombre AS pais_nombre,
+//             s.id AS suscripcion_id,
+//       s.tipo AS suscripcion_tipo,
+//       s.fecha_suscripcion AS suscripcion_fecha_suscripcion,
+//       s.fecha_vencimiento AS suscripcion_fecha_vencimiento
+        
+//         FROM restaurante r
+//         JOIN suscripcion s ON r.suscripcion_id = s.id
+//         JOIN direccion d ON r.direccion_id = d.id
+//         JOIN ciudad c ON d.ciudad_id = c.id
+//         JOIN departamento dp ON c.departamento_id = dp.id
+//         JOIN pais p ON dp.pais_id = p.id
+//         WHERE r.id = ?
+//       `;
+//   const [rows] = await db.execute(query, [restaurantId]);
+//   if (rows.length === 0) {
+//     throw new AppError(
+//       `Restaurante con ID ${restaurantId} no encontrado`,
+//       404
+//     );
+//   }
+//   const row = rows[0];
+//   const address = Address.fromDB(row);
+//   const suscripcion = Suscription.fromDB(row);
+//   return new Restaurant({
+//     id: row.id,
+//     nombre: row.nombre,
+//     correo: row.correo,
+//     telefono: row.telefono,
+//     estado: row.estado,
+//     idAutenticacion: row.id_autenticacion,
+//     idTransaccional: row.id_transaccional,
+//     capacidadReservas: row.capacidad_reservas,
+//     direccionId: row.direccion_id,
+//     categoria: row.categoria,
+//     descripcion: row.descripcion,
+//     address: address,
+//     suscripcion: suscripcion,
+//     imageUrl:  row.imageUrl || getImgUrl(row.categoria, "restaurant"),
+//   });
+// }
   /**
    * Encuentra un restaurante por su ID.
    * @param {number} restaurantId - ID del restaurante.
@@ -114,20 +187,47 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
    */
   async findById(restaurantId) {
     const query = `
-          SELECT r.*, d.*, c.id AS ciudad_id, c.nombre AS ciudad_nombre, dp.id AS departamento_id, dp.nombre AS departamento_nombre, p.id AS pais_id, p.nombre AS pais_nombre,
-              s.id AS suscripcion_id,
+      SELECT 
+        r.id AS restaurante_id,
+        r.nombre AS restaurante_nombre,
+        r.correo AS restaurante_correo,
+        r.contrasena AS restaurante_contrasena,
+        r.telefono AS restaurante_telefono,
+        r.estado AS restaurante_estado,
+        r.id_autenticacion AS restaurante_id_autenticacion,
+        r.capacidad_reservas AS restaurante_capacidad_reservas,
+        r.categoria AS restaurante_categoria,
+        r.descripcion AS restaurante_descripcion,
+        r.direccion_id AS restaurante_direccion_id,
+        r.suscripcion_id AS restaurante_suscripcion_id,
+        r.imageUrl AS restaurante_imageUrl,
+        d.id AS direccion_id,
+        d.direccion AS direccion_direccion,
+        c.id AS ciudad_id, 
+        c.nombre AS ciudad_nombre, 
+        dp.id AS departamento_id, 
+        dp.nombre AS departamento_nombre, 
+        p.id AS pais_id, 
+        p.nombre AS pais_nombre,
+        s.id AS suscripcion_id,
         s.tipo AS suscripcion_tipo,
         s.fecha_suscripcion AS suscripcion_fecha_suscripcion,
         s.fecha_vencimiento AS suscripcion_fecha_vencimiento
-          
-          FROM restaurante r
-          JOIN suscripcion s ON r.suscripcion_id = s.id
-          JOIN direccion d ON r.direccion_id = d.id
-          JOIN ciudad c ON d.ciudad_id = c.id
-          JOIN departamento dp ON c.departamento_id = dp.id
-          JOIN pais p ON dp.pais_id = p.id
-          WHERE r.id = ?
-        `;
+      FROM 
+        restaurante r
+      LEFT JOIN 
+        suscripcion s ON r.suscripcion_id = s.id
+      LEFT JOIN 
+        direccion d ON r.direccion_id = d.id
+      LEFT JOIN 
+        ciudad c ON d.ciudad_id = c.id
+      LEFT JOIN 
+        departamento dp ON c.departamento_id = dp.id
+      LEFT JOIN 
+        pais p ON dp.pais_id = p.id
+      WHERE 
+        r.id = ?;
+    `;
     const [rows] = await db.execute(query, [restaurantId]);
     if (rows.length === 0) {
       throw new AppError(
@@ -139,20 +239,20 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
     const address = Address.fromDB(row);
     const suscripcion = Suscription.fromDB(row);
     return new Restaurant({
-      id: row.id,
-      nombre: row.nombre,
-      correo: row.correo,
-      telefono: row.telefono,
-      estado: row.estado,
-      idAutenticacion: row.id_autenticacion,
-      idTransaccional: row.id_transaccional,
-      capacidadReservas: row.capacidad_reservas,
-      direccionId: row.direccion_id,
-      categoria: row.categoria,
-      descripcion: row.descripcion,
+      id: row.restaurante_id,
+      nombre: row.restaurante_nombre,
+      correo: row.restaurante_correo,
+      telefono: row.restaurante_telefono,
+      estado: row.restaurante_estado,
+      idAutenticacion: row.restaurante_id_autenticacion,
+      idTransaccional: row.restaurante_id_transaccional,
+      capacidadReservas: row.restaurante_capacidad_reservas,
+      direccionId: row.restaurante_direccion_id,
+      categoria: row.restaurante_categoria,
+      descripcion: row.restaurante_descripcion,
       address: address,
       suscripcion: suscripcion,
-      imageUrl:  row.imageUrl || getImgUrl(row.categoria, "restaurant"),
+      imageUrl: row.restaurante_imageUrl || getImgUrl(row.restaurante_categoria, "restaurant"),
     });
   }
 
@@ -332,6 +432,11 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
       fields.push("id_autenticacion = ?");
       values.push(updates.idAutenticacion);
     }
+
+    if (updates.imageUrl) {
+      fields.push("imageUrl = ?");
+      values.push(updates.imageUrl);
+    }
     //TODO:
     //ACTUALIZAR LAS FECHAS DE SUSCRIPCION SI SE SE RENUEVA ESTA
 
@@ -377,6 +482,18 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
     const query = `SELECT * FROM restaurante WHERE id_autenticacion = ?`;
     const [rows] = await db.execute(query, [googleId]);
     return rows[0];
+  }
+
+  async getSimpleUser(restaurantId) {
+    const query = `SELECT id, nombre, correo, imageUrl FROM restaurante WHERE id = ?`;
+    const [rows] = await db.execute(query, [restaurantId]);
+    const user = {
+      id: rows[0].id,
+      nombre: rows[0].nombre,
+      correo: rows[0].correo,
+      imageUrl: rows[0].imageUrl,
+    }
+    return user;
   }
 }
 

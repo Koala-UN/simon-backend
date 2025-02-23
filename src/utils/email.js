@@ -7,7 +7,20 @@ const sendVerificationEmail = async (email, token) => {
     from: process.env.EMAIL_USER,
     to: email,
     subject: 'Verificación de correo electrónico',
-    html: `<p>Por favor, verifica tu correo electrónico haciendo clic en el siguiente enlace: <a href="${verificationUrl}">Verificar correo</a></p>`
+    html: `<p>Por favor, verifica tu correo electrónico haciendo clic en el siguiente enlace: <a href="${verificationUrl}">Verificar correo</a></p>
+    <br>
+    <p>El enlace de verificación caducará en 1 hora.</p>
+    <p> Si el tiempo caduco, por favor solicita otro enlace de verificación en el siguiente enlace: <a href="${config.app.frontendURL}/restaurant/verify-email-send">Solicitar otro enlace de verificación</a></p>
+    
+    <br>
+    <p>Si no solicitaste la verificación de correo electrónico, ignora este mensaje.</p>
+    
+    <br>
+    <p>Saludos,</p>
+    <p>Equipo de Simon</p>
+    <img src="https://res.cloudinary.com/dnljvvheg/image/upload/q_50/simon-logo" alt="logo"  height="100">
+    
+    `,
   };
 
   await sendEmail(data.to, data.subject, data.html);

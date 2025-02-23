@@ -17,7 +17,7 @@ const authMiddleware = (req, res, next) => {
     }
     req.user = decoded;
     if (process.env.NODE_ENV === 'development') {
-      console.log('auth! :', req.user);
+      //console.log('auth! :', req.user);
     }
     next();
   });
