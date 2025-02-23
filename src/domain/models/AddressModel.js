@@ -21,7 +21,7 @@ class Address {
     return new Address({
       id: row.direccion_id,
       ciudadId: row.ciudad_id,
-      direccion: row.direccion,
+      direccion: row.direccion_direccion,
       ciudad: {
         id: row.ciudad_id,
         departamentoId: row.departamento_id,

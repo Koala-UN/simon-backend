@@ -7,7 +7,7 @@ const config = require("../../config/config");
 const authConfig = require("../../config/authConfig");
 const JWT = require("../../utils/jwt");
 const { sendVerificationEmail, sendEmail } = require("../../utils/email");
-const { uploadImg, getImgUrl, deleteImgsByEmailAndType, updateImg, uploadMultipleImgs, getImagesByEmailAndType } = require("../../utils/ImgCloudinary");
+const { uploadImg, getImgUrl, deleteImgsByEmailAndType, updateImg, uploadMultipleImgs, getImagesByEmailAndType , deleteImgByUrl, updateMultipleImgs} = require("../../utils/ImgCloudinary");
 
 class RestaurantService extends RestaurantServiceInterface {
   /**
@@ -263,7 +263,7 @@ class RestaurantService extends RestaurantServiceInterface {
    * @param {Object} updates - Objeto con los campos a actualizar.
    * @returns {Promise<Restaurant>} El restaurante actualizado.
    */
-  static async updateRestaurant(restaurantId, updates) {
+  async updateRestaurant(restaurantId, updates) {
     if (!restaurantId) {
       throw new AppError("El ID del restaurante es requerido", 400);
     }
@@ -273,21 +273,59 @@ class RestaurantService extends RestaurantServiceInterface {
       throw new AppError("Restaurante no encontrado", 404);
     }
 
-    if (updates.address) {
-      await RestaurantRepository.updateAddress(
-        restaurant.direccionId,
-        updates.address
+    let imageUrlUploaded = false;
+    let imgUrl = null;
+    let oldImgUrl = restaurant.imageUrl;
+    let newImgUrl = null;
+
+    try {
+      // Subir nueva imagen si existe o borrar si es "null"
+      if (updates.imageUrl === "null") {
+        if (restaurant.imageUrl) {
+          await deleteImgByUrl(restaurant.imageUrl);
+        }
+        updates.imageUrl = null;
+        newImgUrl = null;
+      } else if (updates.imageUrl) {
+        imgUrl = await uploadImg(restaurant.correo, "profile", updates.imageUrl);
+        updates.imageUrl = imgUrl;
+        newImgUrl = imgUrl;
+        imageUrlUploaded = true;
+      }
+      updates.imageUrl = newImgUrl;
+
+      if (updates.direccion || updates.ciudadId) {
+        await RestaurantRepository.updateAddress(
+          restaurant.direccionId,
+          updates
+        );
+      }
+
+      const restaurantUpdates = { ...updates };
+      delete restaurantUpdates.direccion;
+      delete restaurantUpdates.ciudadId;
+
+      restaurantUpdates.imageUrl = newImgUrl;
+
+      await RestaurantRepository.updateRestaurant(
+        restaurantId,
+        restaurantUpdates
       );
+
+      // Eliminar la imagen antigua si se subió una nueva
+      if (imageUrlUploaded && oldImgUrl) {
+        console.log("eliminando imagen antigua: ", oldImgUrl);
+        console.log("imagen nueva: ", imgUrl);
+        await deleteImgByUrl(oldImgUrl);
+      }
+
+      return await RestaurantRepository.findById(restaurantId);
+    } catch (error) {
+      if (imageUrlUploaded) {
+        await deleteImgByUrl(imgUrl);
+      }
+      throw error;
     }
-
-    const restaurantUpdates = { ...updates };
-    delete restaurantUpdates.address;
-
-    await RestaurantRepository.updateRestaurant(
-      restaurantId,
-      restaurantUpdates
-    );
-    return await RestaurantRepository.findById(restaurantId);
   }
 
   async updateRestaurantByEmail(email, updates) {
@@ -508,23 +546,36 @@ class RestaurantService extends RestaurantServiceInterface {
   }
 
 
-  // uploadMultipleImages(restaurantId, type, files);
   async uploadMultipleImages(restaurantId, type, files) {
+    console.log("llegamos a service: restaurantId: ", restaurantId, " type: ", type, " files: ", files);
     if (!restaurantId || !type || !files) {
       throw new AppError("Todos los campos son obligatorios para subir las imagenes", 400);
+    }
+    console.log("buscando restaurante");
+    const restaurant = await RestaurantRepository.findById(restaurantId);
+    console.log("buscando restaurante", restaurant);
+    if (!restaurant) {
+      throw new AppError("Restaurante no encontrado", 404);
+    }
+    // lógica para subir múltiples imágenes, usar uploadMultipleImgs
+    const imageUrls = await uploadMultipleImgs(restaurant.correo, type, files);
+    console.log("imageUrls EXITO EN SERVICE: ", imageUrls);
+
+    return imageUrls;
+  }
+
+  // updateMultipleImages
+  async updateMultipleImages(restaurantId, type, files) {
+    if (!restaurantId || !type || !files) {
+      throw new AppError("Todos los campos son obligatorios para actualizar las imagenes", 400);
     }
     const restaurant = await RestaurantRepository.findById(restaurantId);
     if (!restaurant) {
       throw new AppError("Restaurante no encontrado", 404);
     }
-    // logica para subir multiples imagenes, usar uploadMultipleImgs
-    const imageUrls = await uploadMultipleImgs(restaurant.correo, type, files);
-    urls.forEach(url => {
-      imageUrls.push(url);
-    });
-
+    // lógica para subir múltiples imágenes, usar uploadMultipleImgs
+    const imageUrls = await updateMultipleImgs(restaurant.correo, type, files);
     return imageUrls;
-
   }
 
   // getImages
@@ -539,7 +590,24 @@ class RestaurantService extends RestaurantServiceInterface {
     const images = await getImagesByEmailAndType(restaurant.correo, 'restaurant');
     return images;
   }
+  async deleteImageById(restaurantId, imgId) {
+    if (!restaurantId || !imgId) {
+      throw new AppError("Todos los campos son obligatorios para eliminar la imagen", 400);
+    }
+    const restaurant = await RestaurantRepository.findById(restaurantId);
+    if (!restaurant) {
+      throw new AppError("Restaurante no encontrado", 404);
+    }
+    await deleteImgByUrl(imgId);
+  }
 
+  async getAuthUser(id) {
+    const user = await RestaurantRepository.getSimpleUser(id);
+    if (!user) {
+      throw new AppError("Restaurante no encontrado", 404);
+    }
+    return user;
+  }
 }
 
 module.exports = new RestaurantService();

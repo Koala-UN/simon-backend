@@ -27,7 +27,7 @@ class RestaurantController {
    */
   getRestaurantById = asyncHandler(async (req, res) => {
     const { restaurantId } = req.params;
-    console.log("restaurantId", restaurantId);
+    //console.log("restaurantId", restaurantId);
     const restaurant = await restaurantService.getRestaurantById(restaurantId);
     res.status(200).json({
       status: "success",
@@ -96,16 +96,32 @@ class RestaurantController {
    */
   updateRestaurant = asyncHandler(async (req, res) => {
     const { restaurantId } = req.params;
-    const updates = req.body;
-    const updatedRestaurant = await restaurantService.updateRestaurant(
-      restaurantId,
-      updates
-    );
+    const data = req.body;
+    const img = req.file ? req.file : null; // La ruta del archivo subido o null si no hay archivo
+
+    if (req.file) {
+        data.imageUrl = img;
+    }
+
+    const updatedRestaurant = await restaurantService.updateRestaurant(restaurantId, data);
+
+    // si se cambio el correo, nombre, o imagenUrl, se debe actualizar el token
+    if (data.correo || data.nombre || data.imageUrl) {
+      const userData = {
+        id: updatedRestaurant.id,
+        nombre: updatedRestaurant.nombre,
+        correo: updatedRestaurant.correo,
+        imageUrl: updatedRestaurant.imageUrl || null,
+      }
+        JWT.createJWTCookie(res, userData);
+    }
+
+
     res.status(200).json({
-      status: "success",
-      data: updatedRestaurant.toJSON(),
+        status: "success",
+        data: updatedRestaurant.toJSON(),
     });
-  });
+});
 
 
   /**
@@ -240,26 +256,83 @@ class RestaurantController {
 
   // deleteImage
   deleteImage = asyncHandler(async (req, res) => {
-    const { restaurantId, imgUrl } = req.params;
-    await restaurantService.deleteImage(restaurantId, imgUrl);
+    const { restaurantId, imgId } = req.params;
+    await restaurantService.deleteImageById(restaurantId, imgId);
     res.status(200).json({ status: 'success', message: 'Imagen eliminada exitosamente' });
   });
 
 
-  //  uploadMultipleImages
-  uploadMultipleImages = asyncHandler(async (req, res) => {
-    const { restaurantId, type } = req.params;
-    const files = req.files;
-    const imageUrls = await restaurantService.uploadMultipleImages(restaurantId, type, files);
-    res.status(200).json({ status: 'success', data: { imageUrls } });
-  });
+ 
+uploadMultipleImages = asyncHandler(async (req, res) => {
+  const { restaurantId, type } = req.params;
+  const files = req.files;
+
+  if (!files || files.length === 0) {
+      return res.status(400).json({ message: 'No se han subido imágenes.' });
+  }
+
+  console.log('YA LLEGAMOS files: ', files);
+  console.log("imprimendo de todo un poco", req.user, type, files, restaurantId);
+
+  try {
+      console.log('subiendo imagenes');
+      const imageUrls = await restaurantService.uploadMultipleImages(restaurantId, type, files);
+      console.log('se subieron --> imageUrls: ', imageUrls);  
+      res.status(200).json(imageUrls);
+  } catch (error) {
+      console.error('Error al subir las imágenes:', error);
+      res.status(500).json({ message: 'Error al subir las imágenes.', error });
+  }
+});
+updateMultipleImages = asyncHandler(async (req, res) => {
+  console.log('updateMultipleImages YA LLEGAMOS');
+  const { restaurantId, type } = req.params;
+  const files = req.body.images; // Extraer las URLs de las imágenes del cuerpo de la solicitud
+  console.log('2 -- updateMultipleImages YA LLEGAMOS : ', req.body, files, restaurantId, type);
+
+  if (!files || files.length === 0) {
+    return res.status(400).json({ message: 'No se han subido imágenes.' });
+  }
+
+  console.log('updateMultipleImages YA LLEGAMOS files: ', files);
+  console.log("updateMultipleImages --imprimendo de todo un poco", req.user, type, files, restaurantId);
+
+  try {
+    console.log('subiendo imagenes');
+    const imageUrls = await restaurantService.updateMultipleImages(restaurantId, type, files);
+    console.log('se subieron --> imageUrls: ', imageUrls);
+    res.status(200).json(imageUrls);
+  } catch (error) {
+    console.error('Error al subir las imágenes:', error);
+    res.status(500).json({ message: 'Error al subir las imágenes.', error });
+  }
+});
 
 
   // getImages
   getImages = asyncHandler(async (req, res) => {
     const { restaurantId } = req.params;
     const images = await restaurantService.getImages(restaurantId);
-    res.status(200).json({ status: 'success', data: { images } });
+
+    // que esten en este formato:
+    // const images = [
+    //   { id: 1, url: "http://res.cloudinary.com/dnljvvheg/image/upload/v1740232194/landing-page-plate-2.jpg" },
+    //   { id: 2, url: "http://res.cloudinary.com/dnljvvheg/image/upload/v1740232194/landing-page-plate-3.jpg" },
+    //   { id: 3, url: "http://res.cloudinary.com/dnljvvheg/image/upload/v1740232194/landing-page-plate-1.jpg" },
+    //   { id: 4, url: "http://res.cloudinary.com/dnljvvheg/image/upload/v1740232194/landing-page-plate-4.jpg" },
+    //   { id: 5, url: "http://res.cloudinary.com/dnljvvheg/image/upload/v1740232194/landing-page-plate-5.jpg" },
+    // ];
+
+    const formattedImages = images.map((img, index) => {
+      return { id: index + 1, url: img };
+    });
+
+    res.status(200).json(formattedImages);
+  });
+
+  getUserStatus = asyncHandler(async (req, res) => {
+    const user = await restaurantService.getAuthUser(user.id);
+    return user;
   });
   
 }
