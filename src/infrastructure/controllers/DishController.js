@@ -8,12 +8,22 @@ class DishController {
    * @param {Object} res - Objeto de respuesta.
    */
   createDish = asyncHandler(async (req, res) => {
-    const newDish = await dishService.createDish(req.body);
-    res.status(201).json({
-      status: "success",
-      data: newDish.toJSON(),
-    });
+      console.log(req.body);
+      const data = req.body;
+      const img = req.file ? req.file : null; // La ruta del archivo subido o null si no hay archivo
+
+      if (req.file) {
+        data.imageUrl = img;
+      }
+      const newDish = await dishService.createDish(req.body);
+      console.log(" NUEVO PLATILLO", newDish);
+      res.status(201).json({
+        status: "success",
+        data: newDish.toJSON(),
+      });
   });
+
+  
 
   /**
    * Maneja la solicitud DELETE /platillos/:dishId.
@@ -71,12 +81,19 @@ class DishController {
    */
   updateDish = asyncHandler(async (req, res) => {
     const { dishId } = req.params;
-    await dishService.updateDish(dishId, req.body);
+    const data = req.body;
+    const img = req.file ? req.file : null; // La ruta del archivo subido o null si no hay archivo
+
+    if (req.file) {
+        data.imageUrl = img;
+    }
+
+    const updatedDish = await dishService.updateDish(dishId, data, req.user);
     res.status(200).json({
-      status: "success",
-      message: "Platillo actualizado correctamente",
+        status: "success",
+        data: updatedDish.toJSON(),
     });
-  });
+});
 }
 
 module.exports = new DishController();

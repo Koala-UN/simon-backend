@@ -27,6 +27,7 @@ class RestaurantController {
    */
   getRestaurantById = asyncHandler(async (req, res) => {
     const { restaurantId } = req.params;
+    //console.log("restaurantId", restaurantId);
     const restaurant = await restaurantService.getRestaurantById(restaurantId);
     res.status(200).json({
       status: "success",
@@ -72,7 +73,16 @@ class RestaurantController {
    */
   deleteRestaurant = asyncHandler(async (req, res) => {
     const { restaurantId } = req.params;
-    await restaurantService.deleteRestaurant(restaurantId);
+    try {
+          await restaurantService.deleteRestaurant(restaurantId);
+    } catch (error) {
+      res.status(400).json({
+        status: "error",
+        message: "No se pudo eliminar el restaurante",
+      });
+    }    
+
+
     res.status(200).json({
       status: "success",
       message: "Restaurante eliminado correctamente",
@@ -86,16 +96,32 @@ class RestaurantController {
    */
   updateRestaurant = asyncHandler(async (req, res) => {
     const { restaurantId } = req.params;
-    const updates = req.body;
-    const updatedRestaurant = await restaurantService.updateRestaurant(
-      restaurantId,
-      updates
-    );
+    const data = req.body;
+    const img = req.file ? req.file : null; // La ruta del archivo subido o null si no hay archivo
+
+    if (req.file) {
+        data.imageUrl = img;
+    }
+
+    const updatedRestaurant = await restaurantService.updateRestaurant(restaurantId, data);
+
+    // si se cambio el correo, nombre, o imagenUrl, se debe actualizar el token
+    if (data.correo || data.nombre || data.imageUrl) {
+      const userData = {
+        id: updatedRestaurant.id,
+        nombre: updatedRestaurant.nombre,
+        correo: updatedRestaurant.correo,
+        imageUrl: updatedRestaurant.imageUrl || null,
+      }
+        JWT.createJWTCookie(res, userData);
+    }
+
+
     res.status(200).json({
-      status: "success",
-      data: updatedRestaurant.toJSON(),
+        status: "success",
+        data: updatedRestaurant.toJSON(),
     });
-  });
+});
 
 
   /**
@@ -104,14 +130,23 @@ class RestaurantController {
    * @param {Object} res - Objeto de respuesta.
    */
   registerRestaurant = asyncHandler(async (req, res) => {
-    const { restaurantData, addressData, cityId,suscriptionData } = req.body;
-    restaurantData.addressData = addressData;
-    restaurantData.cityId = cityId;
-    restaurantData.suscriptionData = suscriptionData;
-    const newRestaurant = await restaurantService.register(restaurantData, addressData, cityId,suscriptionData);
+    // Parsear los datos JSON
+    const restaurantData = JSON.parse(req.body.restaurantData);
+    const addressData = JSON.parse(req.body.addressData);
+    const cityId = req.body.cityId;
+    const suscriptionData = JSON.parse(req.body.suscriptionData);
+
+    // Añadir la ruta de la imagen al objeto restaurantData
+    if (req.file) {
+      restaurantData.fotoPerfil = req.file;
+    }
+
+    const {newRestaurant, token, user} = await restaurantService.register(restaurantData, addressData, cityId, suscriptionData);
+
+    JWT.createCookie(res, "token", token);
     res.status(201).json({
       status: "success",
-      data: newRestaurant.toJSON(),
+      data:  {user: user, isAuthenticated: true},
     });
   });
 
@@ -135,6 +170,7 @@ class RestaurantController {
     JWT.createCookie(res,"token", result.token);
     res.status(200).json({
       status: "success",
+      data: {user: result.user, isAuthenticated: true},
     });
   });
 
@@ -166,15 +202,24 @@ class RestaurantController {
     }
   });
 
+  verifyEmailSend = asyncHandler(async (req, res) => {
+    const { correo } = req.body;
+    
+    await restaurantService.verifyEmailSend(correo);
+    res.status(200).json({ status: 'success', message: 'Correo de verificación enviado exitosamente' });
+  });
+
   changePassword = asyncHandler(async (req, res) => {
-    const { oldPassword, newPassword } = req.body;
+    const { currentPassword, newPassword } = req.body;
+
     const { correo } = req.user;
-    await restaurantService.changePassword(correo, oldPassword, newPassword);
+    await restaurantService.changePassword(correo, currentPassword, newPassword);
     res.status(200).json({ status: 'success', message: 'Contraseña actualizada exitosamente' });
   });
 
   recoverPassword = asyncHandler(async (req, res) => {
     const { correo } = req.body;
+    console.log('por aquiiiiiiis--iii ** __--> req.body: ', req.body, "    correo: ", correo);
     await restaurantService.recoverPassword(correo);
     res.status(200).json({ status: 'success', message: 'Correo de recuperación de contraseña enviado exitosamente' });
   });
@@ -192,6 +237,102 @@ class RestaurantController {
     const { id, correo } = req.user;
     JWT.createJWTCookie(res, { id, correo });
     res.redirect(`${process.env.FRONTEND_URL}/`); // Redirigir al frontend usando la variable de entorno
+  });
+
+  uploadImage = asyncHandler(async (req, res) => {
+    const { restaurantId, type } = req.params;
+    const file = req.file;
+    const imageUrl = await restaurantService.uploadImage(restaurantId, type, file);
+    res.status(200).json({ status: 'success', data: { imageUrl:imageUrl } });
+  });
+
+  // updateImage
+  updateImage = asyncHandler(async (req, res) => {
+    const { restaurantId, imgUrl } = req.params;
+    const file = req.file;
+    const imageUrl = await restaurantService.updateImage(restaurantId, imgUrl, file);
+    res.status(200).json({ status: 'success', data: { imageUrl } });
+  });
+
+  // deleteImage
+  deleteImage = asyncHandler(async (req, res) => {
+    const { restaurantId, imgId } = req.params;
+    await restaurantService.deleteImageById(restaurantId, imgId);
+    res.status(200).json({ status: 'success', message: 'Imagen eliminada exitosamente' });
+  });
+
+
+ 
+uploadMultipleImages = asyncHandler(async (req, res) => {
+  const { restaurantId, type } = req.params;
+  const files = req.files;
+
+  if (!files || files.length === 0) {
+      return res.status(400).json({ message: 'No se han subido imágenes.' });
+  }
+
+  console.log('YA LLEGAMOS files: ', files);
+  console.log("imprimendo de todo un poco", req.user, type, files, restaurantId);
+
+  try {
+      console.log('subiendo imagenes');
+      const imageUrls = await restaurantService.uploadMultipleImages(restaurantId, type, files);
+      console.log('se subieron --> imageUrls: ', imageUrls);  
+      res.status(200).json(imageUrls);
+  } catch (error) {
+      console.error('Error al subir las imágenes:', error);
+      res.status(500).json({ message: 'Error al subir las imágenes.', error });
+  }
+});
+updateMultipleImages = asyncHandler(async (req, res) => {
+  console.log('updateMultipleImages YA LLEGAMOS');
+  const { restaurantId, type } = req.params;
+  const files = req.body.images; // Extraer las URLs de las imágenes del cuerpo de la solicitud
+  console.log('2 -- updateMultipleImages YA LLEGAMOS : ', req.body, files, restaurantId, type);
+
+  if (!files || files.length === 0) {
+    return res.status(400).json({ message: 'No se han subido imágenes.' });
+  }
+
+  console.log('updateMultipleImages YA LLEGAMOS files: ', files);
+  console.log("updateMultipleImages --imprimendo de todo un poco", req.user, type, files, restaurantId);
+
+  try {
+    console.log('subiendo imagenes');
+    const imageUrls = await restaurantService.updateMultipleImages(restaurantId, type, files);
+    console.log('se subieron --> imageUrls: ', imageUrls);
+    res.status(200).json(imageUrls);
+  } catch (error) {
+    console.error('Error al subir las imágenes:', error);
+    res.status(500).json({ message: 'Error al subir las imágenes.', error });
+  }
+});
+
+
+  // getImages
+  getImages = asyncHandler(async (req, res) => {
+    const { restaurantId } = req.params;
+    const images = await restaurantService.getImages(restaurantId);
+
+    // que esten en este formato:
+    // const images = [
+    //   { id: 1, url: "http://res.cloudinary.com/dnljvvheg/image/upload/v1740232194/landing-page-plate-2.jpg" },
+    //   { id: 2, url: "http://res.cloudinary.com/dnljvvheg/image/upload/v1740232194/landing-page-plate-3.jpg" },
+    //   { id: 3, url: "http://res.cloudinary.com/dnljvvheg/image/upload/v1740232194/landing-page-plate-1.jpg" },
+    //   { id: 4, url: "http://res.cloudinary.com/dnljvvheg/image/upload/v1740232194/landing-page-plate-4.jpg" },
+    //   { id: 5, url: "http://res.cloudinary.com/dnljvvheg/image/upload/v1740232194/landing-page-plate-5.jpg" },
+    // ];
+
+    const formattedImages = images.map((img, index) => {
+      return { id: index + 1, url: img };
+    });
+
+    res.status(200).json(formattedImages);
+  });
+
+  getUserStatus = asyncHandler(async (req, res) => {
+    const user = await restaurantService.getAuthUser(user.id);
+    return user;
   });
   
 }

@@ -5,7 +5,7 @@ const UnauthorizedError = require('../../domain/exception/UnauthorizedError');
 const authMiddleware = (req, res, next) => {
   
   if (!req.cookies || !req.cookies.token) {
-    return res.status(401).json({ authenticated: false, message: 'Token no proporcionado' });
+    return res.status(401).json({ authenticated: false, message: 'Token no proporcionado' , user: {}});
   }
   const token = req.cookies.token;
   jwt.verify(token, config.auth.jwtSecret, (err, decoded) => {
@@ -17,7 +17,7 @@ const authMiddleware = (req, res, next) => {
     }
     req.user = decoded;
     if (process.env.NODE_ENV === 'development') {
-      console.log('auth! :', req.user);
+      //console.log('auth! :', req.user);
     }
     next();
   });

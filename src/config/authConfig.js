@@ -45,7 +45,7 @@ async (accessToken, refreshToken, profile, done) => {
         
         // Crear el nuevo restaurante y enviar correo de verificación
         user = await restaurantRepository._create(restaurantData, addressData, cityId);
-        const verificationToken = jwt.sign({ id: user.id, correo: user.correo }, config.auth.jwtSecret, { expiresIn: config.auth.jwtExpiration });
+        const verificationToken = jwt.sign({ id: user.id, nombre: user.nombre, correo: user.correo, imageUrl: user.imageUrl }, config.auth.jwtSecret, { expiresIn: config.auth.jwtExpiration });
         await sendVerificationEmail(user.correo, verificationToken);
       }
     }

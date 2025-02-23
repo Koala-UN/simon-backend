@@ -2,16 +2,16 @@ require('dotenv').config();
 
 module.exports = {
     app: {
-        port: process.env.PORT || 4000,
+        port: process.env.PORT || 8080,
         frontendURL: process.env.FRONTEND_URL || 'http://localhost:5173',
         backendURL: process.env.BACKEND_URL || 'http://localhost:5000',
     },
     db: {
-        host: process.env.MYSQL_ADDON_HOST || 'localhost',
-        user: process.env.MYSQL_ADDON_USER || 'root',
-        password: process.env.MYSQL_ADDON_PASSWORD || 'Simon#123',
-        database: process.env.MYSQL_ADDON_DB || 'mydb',
-        port: process.env.MYSQL_ADDON_PORT || 3306,
+        host:  process.env.MYSQL_ADDON_HOST ||  'localhost',
+        user:  process.env.MYSQL_ADDON_USER ||  'root',
+        password:  process.env.MYSQL_ADDON_PASSWORD ||  'Simon#123',
+        database:  process.env.MYSQL_ADDON_DB ||  'mydb',
+        port:  process.env.MYSQL_ADDON_PORT ||  3306,
     },
     mercadopago: {
         accessToken: process.env.ACCESS_TOKEN_MERCADO_PAGO||'undefined',
