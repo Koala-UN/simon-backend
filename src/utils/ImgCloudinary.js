@@ -49,8 +49,9 @@ async function uploadImg(email, type, file, index) {
         console.log('Error al subir la imagen a Cloudinary: ', error);
         reject(new Error('Error al subir la imagen a Cloudinary'));
       } else {
-        console.log('Subiendo imagen a Cloudinary exito: ', result.url);
-        resolve(result.url); // Resolvemos la promesa con la URL de la imagen subida
+        const httpsUrl = convertToHttps(result.url);
+        console.log('Subiendo imagen a Cloudinary exito: ', httpsUrl);
+        resolve(httpsUrl); // Resolvemos la promesa con la URL de la imagen subida
       }
     });
 
@@ -216,7 +217,8 @@ async function updateImg(url, email, type, file) {
       if (error) {
         reject(new Error('Error al actualizar la imagen en Cloudinary'));
       } else {
-        resolve(result.url); // Resolvemos la promesa con la URL de la imagen actualizada
+        const httpsUrl = convertToHttps(result.url);
+        resolve(httpsUrl); // Resolvemos la promesa con la URL de la imagen actualizada
       }
     });
 
@@ -251,7 +253,7 @@ async function getImagesByEmailTypeAndIndex(email, type) {
 
         indexedResources.sort((a, b) => a.index - b.index);
 
-        const urls = indexedResources.map(resource => resource.url);
+        const urls = indexedResources.map(resource => convertToHttps(resource.url));
 
         resolve(urls);
       })
@@ -291,11 +293,11 @@ async function getImagesByEmailAndType(email, type) {
 
           indexedResources.sort((a, b) => a.index - b.index);
 
-          const urls = indexedResources.map(resource => resource.url);
+          const urls = indexedResources.map(resource => convertToHttps(resource.url));
           resolve(urls);
         } else {
           // Si no es "restaurant", devolver las URLs sin ordenar
-          const urls = resources.map(resource => resource.url);
+          const urls = resources.map(resource => convertToHttps(resource.url));
           resolve(urls);
         }
       })
@@ -319,6 +321,11 @@ function getOptimizedOptions(type, options) {
     ];
   }
   return options;
+}
+
+// funcion para convertir http en https a un string de un link
+function convertToHttps(url) {
+  return url.replace('http://', 'https://');
 }
 
 module.exports = {
