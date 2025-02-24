@@ -243,7 +243,7 @@ class RestaurantController {
     }
   
     const { email } = req.user;
-    const restaurant = await RestaurantRepository.findByEmail(email);
+    const restaurant = await restaurantService.findByEmail(email);
   
     if (restaurant) {
       const { nombre, correo, imageUrl } = restaurant;
