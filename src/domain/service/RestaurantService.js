@@ -70,6 +70,8 @@ class RestaurantService extends RestaurantServiceInterface {
         nombre: newRestaurant.nombre,
         correo: newRestaurant.correo,
         imageUrl: newRestaurant.imageUrl || null,
+        sub: (suscriptionData && suscriptionData.tipo)? true : false,
+        ver: false
       }
   
       const verificationToken = JWT.createJWT(userData);
@@ -99,6 +101,8 @@ class RestaurantService extends RestaurantServiceInterface {
       nombre: restaurant.nombre,
       correo: restaurant.correo,
       imageUrl: restaurant.imageUrl || null,
+      sub: (restaurant.suscripcion_id)? true : false,
+      ver: false
     }
     const verificationToken = JWT.createJWT(userData);
     console.log(

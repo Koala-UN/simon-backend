@@ -4,6 +4,8 @@ const restaurantRepository = require('../infrastructure/repositories/RestaurantR
 const restaurantService = require('../domain/service/RestaurantService');
 const jwt = require('jsonwebtoken');
 const config = require('./config');
+const fetch = require('node-fetch');
+const {uploadImg} = require('../utils/ImgCloudinary');
 const {sendVerificationEmail} = require('../utils/email');
 
 passport.use(new GoogleStrategy({
@@ -24,19 +26,22 @@ async (accessToken, refreshToken, profile, done) => {
         await restaurantRepository.updateRestaurant(user.id, { idAutenticacion: profile.id });
       } else {
         // Crear un nuevo usuario con el perfil de Google
+
         const restaurantData = {
-          nombre: profile.displayName,
-          correo: profile.emails[0].value,
-          idAutenticacion: profile.id,
-          estado: "NO_VERIFICADO",
-          telefono: null,
-          idTransaccional: null,
-          capacidadReservas: null,
-          categoria: null,
-          descripcion: null,
+          nombre: profile.displayName || null,
+          correo: profile.emails[0].value || null,
           contrasena: null,
+          telefono: null,
+          estado: "NO_VERIFICADO",
+          idAutenticacion: profile.id || null,
+          capacidadReservas: null,
+          direccion_id: 1, // Default city ID
+          descripcion: null,
+          categoria: null,
+          imageUrl: profile.photos[0].value ?? null,
+          suscripcion_id: null,
         };
-        
+
         const addressData = {
           direccion: "Establecer dirección de " + profile.displayName,
         };
@@ -45,7 +50,7 @@ async (accessToken, refreshToken, profile, done) => {
         
         // Crear el nuevo restaurante y enviar correo de verificación
         user = await restaurantRepository._create(restaurantData, addressData, cityId);
-        const verificationToken = jwt.sign({ id: user.id, nombre: user.nombre, correo: user.correo, imageUrl: user.imageUrl }, config.auth.jwtSecret, { expiresIn: config.auth.jwtExpiration });
+        const verificationToken = jwt.sign({ id: user.id, nombre: user.nombre, correo: user.correo, imageUrl: user.imageUrl, sub: false, ver: false }, config.auth.jwtSecret, { expiresIn: config.auth.jwtExpiration });
         await sendVerificationEmail(user.correo, verificationToken);
       }
     }

@@ -112,6 +112,8 @@ class RestaurantController {
         nombre: updatedRestaurant.nombre,
         correo: updatedRestaurant.correo,
         imageUrl: updatedRestaurant.imageUrl || null,
+        sub: updatedRestaurant.suscripcion_id? true : false,
+        ver: updatedRestaurant.estado !== 'NO_VERIFICADO' ? true : false,
       }
         JWT.createJWTCookie(res, userData);
     }
@@ -141,7 +143,7 @@ class RestaurantController {
       restaurantData.fotoPerfil = req.file;
     }
 
-    const {newRestaurant, token, user} = await restaurantService.register(restaurantData, addressData, cityId, suscriptionData);
+    const {newRestaurant, token, user } = await restaurantService.register(restaurantData, addressData, cityId, suscriptionData);
 
     JWT.createCookie(res, "token", token);
     res.status(201).json({
@@ -242,13 +244,14 @@ class RestaurantController {
       return; // Este return es necesario para detener la ejecución del código
     }
   
-    const { email } = req.user;
-    const restaurant = await restaurantService.findByEmail(email);
+    const { correo } = req.user;
+    console.log('CALLBACK DE GOOGLE :   ', req.user);
+    const restaurant = await restaurantService.findByEmail(correo);
   
     if (restaurant) {
       const { id,  nombre, correo, imageUrl } = restaurant;
-      const tokenData = { id, nombre, correo, imageUrl };
-      createJWTCookie(res, tokenData);
+      const tokenData = { id, nombre, correo, imageUrl, sub: restaurant.suscripcion_id ? true : false, ver: restaurant.estado !== 'NO_VERIFICADO' ? true : false };
+      JWT.createJWTCookie(res, tokenData);
       res.redirect(`${process.env.FRONTEND_URL}/`);
     } else {
       // Redirige al usuario a la página de login si no se encuentra el restaurante

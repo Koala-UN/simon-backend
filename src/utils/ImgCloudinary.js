@@ -195,6 +195,8 @@ async function deleteImgsByEmailAndType(email, type) {
 
 // Función para eliminar una imagen de Cloudinary usando la URL
 async function deleteImgByUrl(url) {
+  if (!isCloudinaryUrl(url)) return url; // Verificar si la URL es de Cloudinary
+
   const publicId = url.split('/').pop().split('.')[0]; // Extraer el publicId de la URL
   return deleteImg(publicId);
 }
@@ -327,6 +329,12 @@ function getOptimizedOptions(type, options) {
 function convertToHttps(url) {
   return url ? url.replace('http://', 'https://'): url;
 }
+
+function isCloudinaryUrl(url) {
+  // Verificar si la URL es de Cloudinary, ser muy preciso, quisaz usar regex
+  return (url && url.includes('res.cloudinary.com') && url.includes('/image/upload/'));
+}
+
 
 module.exports = {
   getImgUrl,
