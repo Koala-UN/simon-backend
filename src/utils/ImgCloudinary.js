@@ -325,7 +325,7 @@ function getOptimizedOptions(type, options) {
 
 // funcion para convertir http en https a un string de un link
 function convertToHttps(url) {
-  return url.replace('http://', 'https://');
+  return url ? url.replace('http://', 'https://'): url;
 }
 
 module.exports = {
