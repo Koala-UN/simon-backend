@@ -3,7 +3,7 @@ const RestaurantRepositoryInterface = require("../../domain/interfaces/restauran
 const Restaurant = require("../../domain/models/RestaurantModel");
 const Address = require("../../domain/models/AddressModel");
 const category = require("../../utils/cagetory");
-const {getImgUrl} = require("../../utils/ImgCloudinary");
+const {getImgUrl , convertToHttps} = require("../../utils/ImgCloudinary");
 const Suscription = require("../../domain/models/SuscriptionModel");
 const AppError = require("../../domain/exception/AppError");
 
@@ -252,7 +252,7 @@ class RestaurantRepository extends RestaurantRepositoryInterface {
       descripcion: row.restaurante_descripcion,
       address: address,
       suscripcion: suscripcion,
-      imageUrl: row.restaurante_imageUrl || getImgUrl(row.restaurante_categoria, "restaurant"),
+      imageUrl: convertToHttps(row.restaurante_imageUrl) || getImgUrl(row.restaurante_categoria, "restaurant"),
     });
   }
 

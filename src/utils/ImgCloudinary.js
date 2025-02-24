@@ -339,5 +339,6 @@ module.exports = {
   updateImg,
   updateMultipleImgs,
   getImagesByEmailAndType,
-  getImagesByEmailTypeAndIndex
+  getImagesByEmailTypeAndIndex,
+  convertToHttps,
 };
