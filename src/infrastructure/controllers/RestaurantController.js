@@ -237,9 +237,23 @@ class RestaurantController {
   });
 
   googleCallback = asyncHandler(async (req, res) => {
-    const { id, correo } = req.user;
-    JWT.createJWTCookie(res, { id, correo });
-    res.redirect(`${process.env.FRONTEND_URL}/`); // Redirigir al frontend usando la variable de entorno
+    if (!req.user) {
+      res.redirect(`${process.env.FRONTEND_URL}/login`);
+      return; // Este return es necesario para detener la ejecución del código
+    }
+  
+    const { email } = req.user;
+    const restaurant = await RestaurantRepository.findByEmail(email);
+  
+    if (restaurant) {
+      const { nombre, correo, imageUrl } = restaurant;
+      const tokenData = { nombre, correo, imageUrl };
+      createJWTCookie(res, tokenData);
+      res.redirect(`${process.env.FRONTEND_URL}/`);
+    } else {
+      // Redirige al usuario a la página de login si no se encuentra el restaurante
+      res.redirect(`${process.env.FRONTEND_URL}/login`);
+    }
   });
 
   uploadImage = asyncHandler(async (req, res) => {
