@@ -104,6 +104,30 @@ class OrderController {
       next(error);
     }
   }
+  /**
+   * Cancela un pedido completo o un platillo específico de un pedido
+   * @param {Request} req - Request de Express
+   * @param {Response} res - Response de Express
+   * @param {NextFunction} next - Next function de Express
+   */
+  async cancelOrder(req, res, next) {
+    try {
+      const { pedidoId, platilloId } = req.params;
+
+      if (!pedidoId) {
+        throw new AppError("El ID del pedido es obligatorio.", 400);
+      }
+
+      const result = await OrderService.cancelOrder(
+        parseInt(pedidoId),
+        platilloId ? parseInt(platilloId) : null
+      );
+
+      res.status(200).json(result);
+    } catch (error) {
+      next(new AppError(error.message, error.statusCode || 500));
+    }
+  }
 }
 
 module.exports = new OrderController();

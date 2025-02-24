@@ -1,23 +1,19 @@
 const state = require("../../utils/state");
 
 class Order {
-
   constructor(data = {}) {
     this.id = data.id || null;
     this.fecha = data.fecha || null;
     this.hora = data.hora || null;
-    this.nombre_cliente = data.nombre_cliente|| null;
-    this.estado = data.estado || state.Pedido.PENDIENTE; // Valor por defecto
+    this.nombre_cliente = data.nombre_cliente || null;
+    this.estado = data.estado || state.Pedido.PENDIENTE;
     this.total = data.total || null;
-
-    // Validaciones
+    // Nueva propiedad para los platillos asociados
+    this.platillos = data.platillos || [];
+    
     this._validateState();
   }
 
-  /**
-   * Valida el estado del pedido.
-   * @private
-   */
   _validateState() {
     const validStates = Object.values(state.Pedido);
     if (!validStates.includes(this.estado)) {
@@ -25,31 +21,10 @@ class Order {
     }
   }
 
-  /**
-   * Valida el formato de la fecha.
-   * @private
-   */
-  _validateDate() {
-    if (this.fecha && !/^\d{4}-\d{2}-\d{2}$/.test(this.fecha)) {
-      throw new Error("Formato de fecha inválido (debe ser YYYY-MM-DD)");
-    }
-  }
-
-  /**
-   * Valida el total del pedido.
-   * @private
-   */
-  _validateTotal() {
-    if (this.total !== null && (typeof this.total !== "number" || this.total < 0)) {
-      throw new Error("El total debe ser un número positivo.");
-    }
-  }
-
-
   static fromDB(data) {
+    // Se espera que el repositorio agregue la propiedad 'platillos' al objeto
     return new Order(data);
   }
-
 
   toJSON() {
     return {
@@ -59,6 +34,7 @@ class Order {
       nombre_cliente: this.nombre_cliente,
       estado: this.estado,
       total: this.total,
+      platillos: this.platillos // Se incluye la info de platillos
     };
   }
 }
