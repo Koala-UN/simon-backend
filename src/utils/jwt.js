@@ -6,15 +6,19 @@ const createJWT = (data) => {
   return jwt.sign({ ...data }, config.auth.jwtSecret, { expiresIn: config.auth.jwtExpiration });
 };
 
+let cookieConfig = {};
+const isProduction = process.env.NODE_ENV === 'production';
+cookieConfig = {
+  httpOnly: true,
+  secure: isProduction, // Solo seguro en producción
+  sameSite: 'None', // Permitir cookies en solicitudes cross-site
+  maxAge: config.auth.jwtExpiration
+};
+
+
 // Función para crear una cookie
 const createCookie = (res, name, value) => {
-  const isProduction = !process.env.NODE_ENV || process.env.NODE_ENV !== 'development';
-  res.cookie(name, value, {
-    httpOnly: true,
-    secure: isProduction, // Solo seguro en producción
-    sameSite: isProduction ? 'None' : 'Lax', // 'None' para producción, 'Lax' para desarrollo
-    maxAge: config.auth.jwtExpiration
-  });
+  res.cookie(name, value, cookieConfig);
 };
 
 // Función para crear una cookie con JWT
