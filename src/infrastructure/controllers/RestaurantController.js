@@ -243,11 +243,11 @@ class RestaurantController {
     }
   
     const { email } = req.user;
-    const restaurant = await RestaurantRepository.findByEmail(email);
+    const restaurant = await restaurantService.findByEmail(email);
   
     if (restaurant) {
-      const { nombre, correo, imageUrl } = restaurant;
-      const tokenData = { nombre, correo, imageUrl };
+      const { id,  nombre, correo, imageUrl } = restaurant;
+      const tokenData = { id, nombre, correo, imageUrl };
       createJWTCookie(res, tokenData);
       res.redirect(`${process.env.FRONTEND_URL}/`);
     } else {
