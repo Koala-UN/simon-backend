@@ -11,11 +11,22 @@ const cookieParser = require("cookie-parser"); // Importar cookie-parser
 
 const { passport } = require('./config/authConfig');
 
-// Configuración de CORS
+const allowedOrigins = [
+  'https://simon-frontend-xi.vercel.app',
+  'http://localhost:3000' // Añade tu origen local aquí
+];
+
 const corsOptions = {
-  origin: true, // Permitir peticiones de cualquier lado
+  origin: (origin, callback) => {
+    if (allowedOrigins.includes(origin) || !origin) {
+      callback(null, true);
+    } else {
+      callback(new Error('No permitido por CORS -> Seguridad de la API de Simon'));
+    }
+  },
   credentials: true, // Permite el envío de cookies
 };
+
 
 app.use(cors(corsOptions));
 app.use(cookieParser()); // Usar cookie-parser antes de cualquier middleware que necesite acceder a las cookies

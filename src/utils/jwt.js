@@ -6,11 +6,11 @@ const createJWT = (data) => {
   return jwt.sign({ ...data }, config.auth.jwtSecret, { expiresIn: config.auth.jwtExpiration });
 };
 
-// Función para crear una cookie
 const createCookie = (res, name, value) => {
+  const isProduction = !process.env.NODE_ENV || process.env.NODE_ENV !== 'development';
   res.cookie(name, value, {
     httpOnly: true,
-    secure: false, // Permitir cookies en HTTP y HTTPS
+    secure: isProduction, // Solo true en producción
     sameSite: 'None', // Permitir cookies en solicitudes cross-site
     maxAge: config.auth.jwtExpiration
   });
