@@ -1,7 +1,7 @@
 const pool = require("../../database/connection");
 const OrderRepositoryInterface = require("../../domain/interfaces/order/RepositoryInterface");
 const state = require("../../utils/state");
-const AppError = require('../../domain/exception/AppError')
+const AppError = require("../../domain/exception/AppError");
 /**
  * Clase que interactúa con la base de datos para las operaciones de pedidos.
  */
@@ -54,19 +54,21 @@ class OrderRepository extends OrderRepositoryInterface {
       `,
       [restaurantId]
     );
-  
+
     // Procesamos los resultados para asegurar un JSON válido
-    return rows.map(row => ({
+    return rows.map((row) => ({
       id: row.id,
       fecha: row.fecha,
       hora: row.hora,
       nombre_cliente: row.nombre_cliente,
       estado: row.estado,
       total: `$${row.total.toLocaleString()}`,
-      platillos: JSON.parse(row.platillos).filter(item => item !== null && item.platillo_id !== null)
+      platillos: JSON.parse(row.platillos).filter(
+        (item) => item !== null && item.platillo_id !== null
+      ),
     }));
   }
-  
+
   async findOrderById(pedidoId) {
     const [rows] = await pool.query(
       `
@@ -96,11 +98,11 @@ class OrderRepository extends OrderRepositoryInterface {
       `,
       [pedidoId]
     );
-  
+
     if (!rows.length) {
       throw new Error(`Pedido con ID ${pedidoId} no encontrado.`);
     }
-  
+
     const row = rows[0];
     return {
       id: row.id,
@@ -108,7 +110,9 @@ class OrderRepository extends OrderRepositoryInterface {
       hora: row.hora,
       nombre_cliente: row.nombre_cliente,
       total: `$${row.total.toLocaleString()}`,
-      platillos: JSON.parse(row.platillos).filter(item => item !== null && item.platillo_id !== null)
+      platillos: JSON.parse(row.platillos).filter(
+        (item) => item !== null && item.platillo_id !== null
+      ),
     };
   }
   /**
@@ -124,11 +128,11 @@ class OrderRepository extends OrderRepositoryInterface {
        WHERE id = ?`,
       [pedidoId]
     );
-  
+
     if (!orderInfo || orderInfo.length === 0) {
       throw new Error(`Pedido con ID ${pedidoId} no encontrado.`);
     }
-  
+
     // Luego obtenemos los platillos del pedido
     const [platillos] = await pool.query(
       `SELECT 
@@ -143,24 +147,26 @@ class OrderRepository extends OrderRepositoryInterface {
        ORDER BY pl.nombre`,
       [pedidoId]
     );
-  
+
     // Formateamos la lista de platillos de manera más legible
-    const platillosFormateados = platillos.map(item => ({
+    const platillosFormateados = platillos.map((item) => ({
       nombre: item.nombre,
       cantidad: item.cantidad,
       estado: item.estado,
-      precio: item.precio_formateado
+      precio: item.precio_formateado,
     }));
-  
+
     return {
       pedido: {
         id: orderInfo[0].id,
         fecha: orderInfo[0].fecha,
         hora: orderInfo[0].hora,
         cliente: orderInfo[0].nombre_cliente,
-        total: `$${platillos.reduce((sum, item) => sum + parseFloat(item.total), 0).toLocaleString()}`,
-        items: platillosFormateados
-      }
+        total: `$${platillos
+          .reduce((sum, item) => sum + parseFloat(item.total), 0)
+          .toLocaleString()}`,
+        items: platillosFormateados,
+      },
     };
   }
   /**
@@ -302,6 +308,99 @@ class OrderRepository extends OrderRepositoryInterface {
     } catch (error) {
       await connection.rollback();
       throw new AppError(`Error al crear el pedido: ${error.message}`, 500);
+    } finally {
+      connection.release();
+    }
+  }
+  async cancelOrder(pedidoId, platilloId = null) {
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
+
+      // Verificar si el pedido existe
+      const [orderExists] = await connection.query(
+        "SELECT id FROM pedido WHERE id = ?",
+        [pedidoId]
+      );
+
+      if (!orderExists.length) {
+        throw new AppError(`Pedido con ID ${pedidoId} no encontrado.`, 404);
+      }
+
+      // Si se proporciona platilloId, cancelar solo ese platillo
+      if (platilloId) {
+        // Obtener información del platillo antes de cancelarlo
+        const [platilloInfo] = await connection.query(
+          `SELECT cantidad, platillo_id, estado 
+           FROM platillo_has_pedido 
+           WHERE pedido_id = ? AND platillo_id = ?`,
+          [pedidoId, platilloId]
+        );
+
+        if (!platilloInfo.length) {
+          throw new AppError(
+            `Platillo ${platilloId} no encontrado en el pedido ${pedidoId}`,
+            404
+          );
+        }
+
+        if (platilloInfo[0].estado === "CANCELADO") {
+          throw new AppError("Este platillo ya está cancelado", 400);
+        }
+
+        // Actualizar el estado del platillo a CANCELADO
+        await connection.query(
+          `UPDATE platillo_has_pedido 
+           SET estado = 'CANCELADO' 
+           WHERE pedido_id = ? AND platillo_id = ?`,
+          [pedidoId, platilloId]
+        );
+
+        // Devolver las existencias al inventario
+        await connection.query(
+          `UPDATE platillo 
+           SET existencias = existencias + ? 
+           WHERE id = ?`,
+          [platilloInfo[0].cantidad, platilloId]
+        );
+      } else {
+        // Cancelar todo el pedido
+        // Primero obtener todos los platillos del pedido que no estén cancelados
+        const [platillos] = await connection.query(
+          `SELECT cantidad, platillo_id, estado 
+           FROM platillo_has_pedido 
+           WHERE pedido_id = ? AND estado != 'CANCELADO'`,
+          [pedidoId]
+        );
+
+        // Actualizar todos los platillos a CANCELADO
+        await connection.query(
+          `UPDATE platillo_has_pedido 
+           SET estado = 'CANCELADO' 
+           WHERE pedido_id = ?`,
+          [pedidoId]
+        );
+
+        // Devolver las existencias al inventario para cada platillo
+        for (const platillo of platillos) {
+          await connection.query(
+            `UPDATE platillo 
+             SET existencias = existencias + ? 
+             WHERE id = ?`,
+            [platillo.cantidad, platillo.platillo_id]
+          );
+        }
+      }
+
+      await connection.commit();
+      return {
+        message: platilloId
+          ? `Platillo ${platilloId} cancelado exitosamente del pedido ${pedidoId}`
+          : `Pedido ${pedidoId} cancelado exitosamente`,
+      };
+    } catch (error) {
+      await connection.rollback();
+      throw new AppError(error.message, error.statusCode || 500);
     } finally {
       connection.release();
     }

@@ -126,6 +126,24 @@ class OrderService extends OrderServiceInterface {
     // Delegar la creación del pedido al repositorio
     return await OrderRepository.create(orderData, platillos);
   }
+  /**
+   * Cancela un pedido o un platillo específico de un pedido
+   * @param {number} pedidoId - ID del pedido
+   * @param {number} [platilloId] - ID del platillo (opcional)
+   * @returns {Promise<Object>} Mensaje de confirmación
+   */
+  async cancelOrder(pedidoId, platilloId = null) {
+    try {
+      return await OrderRepository.cancelOrder(pedidoId, platilloId);
+    } catch (error) {
+      throw new AppError(
+        `Error al cancelar el ${platilloId ? "platillo" : "pedido"}: ${
+          error.message
+        }`,
+        error.statusCode || 500
+      );
+    }
+  }
 }
 
 module.exports = new OrderService();
