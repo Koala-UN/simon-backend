@@ -13,7 +13,8 @@ const { passport } = require('./config/authConfig');
 
 const allowedOrigins = [
   'https://simon-frontend-xi.vercel.app',
-  'http://localhost:3000' // Añade tu origen local aquí
+  'http://localhost:5173', // Añade tu origen local aquí
+  'http://localhost:3000'
 ];
 
 const corsOptions = {
