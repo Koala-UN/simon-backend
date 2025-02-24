@@ -28,6 +28,7 @@ const state = {
   Pedido: {
     ENTREGADO: "ENTREGADO", // Pedido completado
     PENDIENTE: "PENDIENTE", // Pedido en proceso
+    CANCELADO: "CANCELADO", // Pedido cancelado
   },
 };
 
