@@ -180,12 +180,15 @@ class RestaurantController {
    * @param {Object} res - Objeto de respuesta.
    */
   logoutRestaurant = asyncHandler(async (req, res) => {
-    res.clearCookie('token');
+    res.clearCookie('token', {
+      httpOnly: true,
+      secure: true, // Solo seguro en producción
+      sameSite: 'None', // Permitir cookies en solicitudes cross-site
+    });
     res.status(200).json({
       status: "success",
-    }); 
-  }
-  );
+    });
+  });
 
   verifyEmail = asyncHandler(async (req, res) => {
     const { token } = req.query;
