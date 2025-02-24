@@ -53,7 +53,7 @@ router.get('/verify-email', restaurantController.verifyEmail);
 router.post('/rec-password/', restaurantController.recoverPassword);
 
 // Rutas para Imágenes
-router.get('/:restaurantId/img', authMiddleware, restaurantController.getImages);
+router.get('/:restaurantId/img', restaurantController.getImages);
 router.patch('/:restaurantId/images/:type', authMiddleware, restaurantController.updateMultipleImages);
 router.post('/:restaurantId/images/:type', authMiddleware, upload.array('images', 10), restaurantController.uploadMultipleImages);
 router.post('/:restaurantId/img/:type', upload.single('image'), restaurantController.uploadImage);

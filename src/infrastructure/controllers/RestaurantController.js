@@ -317,15 +317,6 @@ updateMultipleImages = asyncHandler(async (req, res) => {
     const { restaurantId } = req.params;
     const images = await restaurantService.getImages(restaurantId);
 
-    // que esten en este formato:
-    // const images = [
-    //   { id: 1, url: "http://res.cloudinary.com/dnljvvheg/image/upload/v1740232194/landing-page-plate-2.jpg" },
-    //   { id: 2, url: "http://res.cloudinary.com/dnljvvheg/image/upload/v1740232194/landing-page-plate-3.jpg" },
-    //   { id: 3, url: "http://res.cloudinary.com/dnljvvheg/image/upload/v1740232194/landing-page-plate-1.jpg" },
-    //   { id: 4, url: "http://res.cloudinary.com/dnljvvheg/image/upload/v1740232194/landing-page-plate-4.jpg" },
-    //   { id: 5, url: "http://res.cloudinary.com/dnljvvheg/image/upload/v1740232194/landing-page-plate-5.jpg" },
-    // ];
-
     const formattedImages = images.map((img, index) => {
       return { id: index + 1, url: img };
     });
