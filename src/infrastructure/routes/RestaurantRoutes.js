@@ -89,6 +89,9 @@ router.post('/register', upload.single('fotoPerfil'), restaurantController.regis
 router.post('/login', restaurantController.loginRestaurant);
 router.post('/logout', restaurantController.logoutRestaurant);
 
+// Actualizar suscripción
+router.patch('/:restaurantId/suscription', restaurantController.updateSuscription);
+
 
 
 // // Aplicar middleware de autenticación a todas las rutas siguientes
