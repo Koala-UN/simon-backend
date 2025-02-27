@@ -32,6 +32,19 @@ app.use(passport.initialize());
 // Usar las rutas centralizadas
 app.use("/api", routes);
 
+app.get('/api/proxy/github-image', async (req, res) => {
+  const imageUrl = req.query.url;
+  try {
+    const response = await fetch(imageUrl);
+    const buffer = await response.arrayBuffer();
+    res.set('Content-Type', response.headers.get('content-type'));
+    res.send(Buffer.from(buffer));
+  } catch (error) {
+    console.log("este es el eerrrroooor:::: --->"+error);
+    res.status(error.response).json(error.response);
+  }
+});
+
 // Middleware para manejar rutas no encontradas
 app.use(notFoundHandler);
 

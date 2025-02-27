@@ -128,6 +128,7 @@ class RestaurantService extends RestaurantServiceInterface {
     if (!user) {
       throw new Error("Correo o contraseña incorrectos");
     }
+    console.log("login: ", user, data.contrasena, user.contrasena);
 
     const isPasswordValid = await bcrypt.compare(
       data.contrasena,
