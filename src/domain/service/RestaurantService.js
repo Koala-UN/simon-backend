@@ -7,7 +7,16 @@ const config = require("../../config/config");
 const authConfig = require("../../config/authConfig");
 const JWT = require("../../utils/jwt");
 const { sendVerificationEmail, sendEmail } = require("../../utils/email");
-const { uploadImg, getImgUrl, deleteImgsByEmailAndType, updateImg, uploadMultipleImgs, getImagesByEmailAndType , deleteImgByUrl, updateMultipleImgs} = require("../../utils/ImgCloudinary");
+const {
+  uploadImg,
+  getImgUrl,
+  deleteImgsByEmailAndType,
+  updateImg,
+  uploadMultipleImgs,
+  getImagesByEmailAndType,
+  deleteImgByUrl,
+  updateMultipleImgs,
+} = require("../../utils/ImgCloudinary");
 
 class RestaurantService extends RestaurantServiceInterface {
   /**
@@ -46,7 +55,11 @@ class RestaurantService extends RestaurantServiceInterface {
     // Manejar la subida de la imagen de perfil
     let imageUrlUploaded = false;
     if (restaurantData.fotoPerfil) {
-      const imageUrl = await uploadImg( restaurantData.correo, "profile", restaurantData.fotoPerfil);
+      const imageUrl = await uploadImg(
+        restaurantData.correo,
+        "profile",
+        restaurantData.fotoPerfil
+      );
       restaurantData.imageUrl = imageUrl;
       console.log("imagen subida: ", imageUrl);
       imageUrlUploaded = true;
@@ -81,10 +94,10 @@ class RestaurantService extends RestaurantServiceInterface {
       //   verificationToken
       // );
       //await sendVerificationEmail(newRestaurant.correo, verificationToken);
-      return {newRestaurant, token: verificationToken, user: userData};
+      return { newRestaurant, token: verificationToken, user: userData };
     } catch (error) {
       if (imageUrlUploaded) {
-        await deleteImgsByEmailAndType(restaurantData.correo, 'profile');
+        await deleteImgsByEmailAndType(restaurantData.correo, "profile");
       }
       throw error;
     }
@@ -105,11 +118,7 @@ class RestaurantService extends RestaurantServiceInterface {
       ver: false
     }
     const verificationToken = JWT.createJWT(userData);
-    console.log(
-      "vamos a enviar el correo: ",
-      email,
-      verificationToken
-    );
+    console.log("vamos a enviar el correo: ", email, verificationToken);
     await sendVerificationEmail(restaurant.correo, verificationToken);
     return { token: verificationToken, user: userData };
   }
@@ -127,13 +136,17 @@ class RestaurantService extends RestaurantServiceInterface {
     if (!isPasswordValid) {
       throw new Error("Correo o contraseña incorrectos");
     }
-    
-    const userData = { id: user.id, nombre: user.nombre, correo: user.correo, imageUrl: user.imageUrl || null }
+
+    const userData = {
+      id: user.id,
+      nombre: user.nombre,
+      correo: user.correo,
+      imageUrl: user.imageUrl || null,
+    };
 
     const token = JWT.createJWT(userData);
     return { token, user: userData };
   }
-
 
   verifyEmail = async (id) => {
     await RestaurantRepository.updateRestaurant(id, { estado: "ACTIVO" });
@@ -239,9 +252,8 @@ class RestaurantService extends RestaurantServiceInterface {
     if (!restaurantId) {
       throw new AppError("El ID del restaurante es requerido", 400);
     }
-    
-    try {
 
+    try {
       // debo obtener el correo del restaurante para eliminar las imagenes
       const restaurant = await RestaurantRepository.findById(restaurantId);
       if (!restaurant) {
@@ -252,10 +264,7 @@ class RestaurantService extends RestaurantServiceInterface {
       await RestaurantRepository.deleteRestaurant(restaurant.id);
 
       // luego eliminar las imagenes de cloudinary
-      await deleteImgsByEmailAndType(restaurant.correo, 'all');
-
-      
-
+      await deleteImgsByEmailAndType(restaurant.correo, "all");
     } catch (error) {
       throw new AppError("No se pudo eliminar el restaurante", 400);
     }
@@ -291,7 +300,11 @@ class RestaurantService extends RestaurantServiceInterface {
         updates.imageUrl = null;
         newImgUrl = null;
       } else if (updates.imageUrl) {
-        imgUrl = await uploadImg(restaurant.correo, "profile", updates.imageUrl);
+        imgUrl = await uploadImg(
+          restaurant.correo,
+          "profile",
+          updates.imageUrl
+        );
         updates.imageUrl = imgUrl;
         newImgUrl = imgUrl;
         imageUrlUploaded = true;
@@ -367,7 +380,14 @@ class RestaurantService extends RestaurantServiceInterface {
    * @returns {Promise<void>}
    */
   async changePassword(correo, oldPassword, newPassword) {
-    console.log("correo: ", correo, " oldPassword: ", oldPassword, " newPassword: ", newPassword);
+    console.log(
+      "correo: ",
+      correo,
+      " oldPassword: ",
+      oldPassword,
+      " newPassword: ",
+      newPassword
+    );
     if (!correo || !oldPassword || !newPassword) {
       throw new AppError("Todos los campos son obligatorios", 400);
     }
@@ -422,7 +442,14 @@ class RestaurantService extends RestaurantServiceInterface {
       newPassword,
       config.auth.bcryptSaltRounds
     );
-    console.log("nuevacontraseña: ", newPassword, " restaurante: ", restaurant.contrasena, "    restaurant: ", restaurant);
+    console.log(
+      "nuevacontraseña: ",
+      newPassword,
+      " restaurante: ",
+      restaurant.contrasena,
+      "    restaurant: ",
+      restaurant
+    );
     await this.updateRestaurantByEmail(restaurant.correo, {
       contrasena: hashedNewPassword,
     });
@@ -513,12 +540,15 @@ class RestaurantService extends RestaurantServiceInterface {
    * @param {string} image - Imagen a subir.
    * @returns {Promise<string>} URL de la imagen subida.
    */
-  async uploadImage(email, type, image) {   
-    console.log(email)
-    console.log(type)
-    console.log(image)
+  async uploadImage(email, type, image) {
+    console.log(email);
+    console.log(type);
+    console.log(image);
     if (!email || !type || !image) {
-      throw new AppError("Todos los campos son obligatorios para subir la imagen", 400);
+      throw new AppError(
+        "Todos los campos son obligatorios para subir la imagen",
+        400
+      );
     }
     const imageUrl = await uploadImg(email, type, image);
     return imageUrl;
@@ -526,21 +556,27 @@ class RestaurantService extends RestaurantServiceInterface {
   // updateImage(restaurantId, imgUrl, file);
   async updateImage(restaurantId, imgUrl, file) {
     if (!restaurantId || !imgUrl || !file) {
-      throw new AppError("Todos los campos son obligatorios para actualizar la imagen", 400);
+      throw new AppError(
+        "Todos los campos son obligatorios para actualizar la imagen",
+        400
+      );
     }
     const restaurant = await RestaurantRepository.findById(restaurantId);
     if (!restaurant) {
       throw new AppError("Restaurante no encontrado", 404);
     }
     const imageUrl = await updateImg(restaurant.correo, imgUrl, file);
-    
+
     return imageUrl;
   }
 
   // deleteImage
   async deleteImage(restaurantId, imgUrl) {
     if (!restaurantId || !imgUrl) {
-      throw new AppError("Todos los campos son obligatorios para eliminar la imagen", 400);
+      throw new AppError(
+        "Todos los campos son obligatorios para eliminar la imagen",
+        400
+      );
     }
     const restaurant = await RestaurantRepository.findById(restaurantId);
     if (!restaurant) {
@@ -549,11 +585,20 @@ class RestaurantService extends RestaurantServiceInterface {
     await deleteImgsByEmailAndType(restaurant.correo, imgUrl);
   }
 
-
   async uploadMultipleImages(restaurantId, type, files) {
-    console.log("llegamos a service: restaurantId: ", restaurantId, " type: ", type, " files: ", files);
+    console.log(
+      "llegamos a service: restaurantId: ",
+      restaurantId,
+      " type: ",
+      type,
+      " files: ",
+      files
+    );
     if (!restaurantId || !type || !files) {
-      throw new AppError("Todos los campos son obligatorios para subir las imagenes", 400);
+      throw new AppError(
+        "Todos los campos son obligatorios para subir las imagenes",
+        400
+      );
     }
     console.log("buscando restaurante");
     const restaurant = await RestaurantRepository.findById(restaurantId);
@@ -571,7 +616,10 @@ class RestaurantService extends RestaurantServiceInterface {
   // updateMultipleImages
   async updateMultipleImages(restaurantId, type, files) {
     if (!restaurantId || !type || !files) {
-      throw new AppError("Todos los campos son obligatorios para actualizar las imagenes", 400);
+      throw new AppError(
+        "Todos los campos son obligatorios para actualizar las imagenes",
+        400
+      );
     }
     const restaurant = await RestaurantRepository.findById(restaurantId);
     if (!restaurant) {
@@ -591,12 +639,18 @@ class RestaurantService extends RestaurantServiceInterface {
     if (!restaurant) {
       throw new AppError("Restaurante no encontrado", 404);
     }
-    const images = await getImagesByEmailAndType(restaurant.correo, 'restaurant');
+    const images = await getImagesByEmailAndType(
+      restaurant.correo,
+      "restaurant"
+    );
     return images;
   }
   async deleteImageById(restaurantId, imgId) {
     if (!restaurantId || !imgId) {
-      throw new AppError("Todos los campos son obligatorios para eliminar la imagen", 400);
+      throw new AppError(
+        "Todos los campos son obligatorios para eliminar la imagen",
+        400
+      );
     }
     const restaurant = await RestaurantRepository.findById(restaurantId);
     if (!restaurant) {
@@ -611,6 +665,31 @@ class RestaurantService extends RestaurantServiceInterface {
       throw new AppError("Restaurante no encontrado", 404);
     }
     return user;
+  }
+
+  /**
+   * Actualiza la suscripción de un restaurante.
+   * @param {number} restaurantId - ID del restaurante.
+   * @param {string} tipo - Tipo de suscripción ('MENSUAL' o 'ANUAL').
+   * @returns {Promise<Restaurant>} El restaurante actualizado.
+   * @throws {AppError} Si el restaurante no existe o el tipo de suscripción no es válido.
+   */
+  async updateSuscription(restaurantId, tipo) {
+    if (!restaurantId) {
+      throw new AppError("El ID del restaurante es requerido", 400);
+    }
+
+    if (tipo !== "MENSUAL" && tipo !== "ANUAL") {
+      throw new AppError(
+        "El tipo de suscripción debe ser 'MENSUAL' o 'ANUAL'",
+        400
+      );
+    }
+
+    await RestaurantRepository.updateSuscription(restaurantId, tipo);
+
+    // Retornar el restaurante actualizado
+    return await RestaurantRepository.findById(restaurantId);
   }
 }
 

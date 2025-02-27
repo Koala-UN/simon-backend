@@ -1,8 +1,9 @@
 const cloudinary = require('cloudinary').v2;
 const multer = require('multer');
-const pLimit = require('p-limit');
-const dish = require('../../assets/json/dishMap.json');
-const restaurant = require('../../assets/json/restaurantMap.json');
+// usar p-limit
+// const pLimit = require('p-limit');
+const dish = require( '../../assets/json/dishMap.json');
+const restaurant =  require('../../assets/json/restaurantMap.json');
 
 // Configurar Cloudinary
 cloudinary.config({
@@ -13,41 +14,43 @@ cloudinary.config({
 
 // Configurar Multer para manejar la subida de archivos en memoria
 const storage = multer.memoryStorage();
-const upload = multer({ storage: storage, limits: { fileSize: 1048576 * 5 } }); // Limite de tamaño de archivo de 5MB
+const upload = multer({ storage: storage, limits: { fileSize: 1048576 * ( 5 ) } }); // Limite de tamaño de archivo de 5MB
 
-/**   ✅ Función getUrl(url) que retorna una URL basada en la categoría **/
-function getImgUrl(categoryKey, type) {
+
+/**   ✅ Función getUrl(url) que retorna una URL basada en la categoría**/
+function getImgUrl(categoryKey, type ) {
   const categoryUrlMap =
-    type === 'restaurant'
+    type === "restaurant"
       ? restaurant[categoryKey]
-      : type === 'dish'
+      : type === "dish"
       ? dish[categoryKey]
       : null;
   return categoryUrlMap;
 }
 
-// Función para subir una imagen
-async function uploadImg(email, type, file, index) {
-  const user = email.split('@')[0]; // Obtenemos el nombre del usuario
-  console.log('uploadImg - Subiendo imagen a Cloudinary: ', file, email, type);
 
-  // Si el índice no está definido, no incluir el tag de indexación
-  const tags = [user, type];
-  if (index !== undefined && index !== null) {
-    tags.push(`index_${index}`);
-  }
-  console.log("OJOOOO TAGS EN uploadImg", tags);
+
+
+// Función para subir una imagen
+/**
+ * 
+ * @param {string} email - Correo del restaurante
+ * @param {string} type - Tipo de imagen, ya sea 'profile' (profile photo) o dish o drink o restaurant (fotos del restaurante) según el caso
+ * @param {File} file - Archivo de imagen
+ * @returns {Promise<string>} - URL de la imagen subida
+ */
+async function uploadImg(email, type, file) {
+  const user = email.split("@")[0]; // Obtenemos el nombre del usuario
+  const tags = [user, type]; // Creamos un array con los dos tags
 
   return new Promise((resolve, reject) => {
     const options = { tags: tags };
 
     getOptimizedOptions(type, options);
-    console.log('Subiendo imagen a Cloudinary un segundo antes: ', file, email, type);
 
     const stream = cloudinary.uploader.upload_stream(options, (error, result) => {
       if (error) {
-        console.log('Error al subir la imagen a Cloudinary: ', error);
-        reject(new Error('Error al subir la imagen a Cloudinary'));
+        reject(new Error('Error al subir la imagen a Cloudinary' + error));
       } else {
         const httpsUrl = convertToHttps(result.url);
         console.log('Subiendo imagen a Cloudinary exito: ', httpsUrl);
@@ -60,95 +63,51 @@ async function uploadImg(email, type, file, index) {
   });
 }
 
-// Función para obtener el último índice de las imágenes existentes
-async function getLastIndex(email, type) {
-  const user = email.split('@')[0]; // Obtenemos el nombre del usuario
-  const tags = [user, type]; // Creamos un array con los tags
 
-  return new Promise((resolve, reject) => {
-    const expression = tags.map(tag => `tags:${tag}`).join(' AND ');
-    cloudinary.search
-      .expression(expression)
-      .sort_by('created_at', 'desc')
-      .max_results(100)
-      .execute()
-      .then(result => {
-        const resources = result.resources;
-        const indices = resources.map(resource => {
-          if (resource.tags) {
-            const indexTag = resource.tags.find(tag => tag.startsWith('index_'));
-            console.log("OJOOOO indextag en getLast index: ", tags);
-            return indexTag ? parseInt(indexTag.split('_')[1], 10) : 0;
-          } else {
-            return 0;
-          }
-        });
-        const lastIndex = Math.max(...indices, 0);
-        resolve(lastIndex);
-      })
-      .catch(error => {
-        console.error('Error al obtener las imágenes de Cloudinary:', error);
-        reject(new Error('Error al obtener las imágenes de Cloudinary: ' + error.message));
-      });
-  });
-}
+// // Función para subir múltiples imágenes utilizando p-limit
+// /**
+//  * 
+//  * @param {string} email - Correo del restaurante
+//  * @param {string} type - Tipo de imagen, ya sea 'profile' (profile photo) o dish o drink o restaurant (fotos del restaurante) según el caso
+//  * @param {Array<File>} files - Array de archivos de imagen
+//  * @returns {Promise<Array<string>>} - Array de URLs de las imágenes subidas
+//  */
+// async function uploadMultipleImgs(email, type, files) {
+  
+//   const limit = pLimit(5); // Limitar a 5 peticiones concurrentes
+//   const uploadPromises = files.map(file => {
+//     return limit(async () => {
+//       const imageUrl = await uploadImg(email, type, file);
+//       return imageUrl;
+//     });
+//   });
 
-// Función para subir múltiples imágenes utilizando p-limit
+//   return Promise.all(uploadPromises);
+// }
+
+/**
+ * Función para subir múltiples imágenes sin usar p-limit
+ * @param {string} email - Correo del restaurante
+ * @param {string} type - Tipo de imagen, ya sea 'profile' (profile photo) o dish o drink o restaurant (fotos del restaurante) según el caso
+ * @param {Array<File>} files - Array de archivos de imagen
+ * @returns {Promise<Array<string>>} - Array de URLs de las imágenes subidas
+ */
 async function uploadMultipleImgs(email, type, files) {
-  console.log('Subiendo múltiples imágenes a Cloudinary: ', files, email, type);
-
-  try {
-    const lastIndex = await getLastIndex(email, type);
-    console.log('Último índice encontrado: ', lastIndex);
-
-    const uploadPromises = files.map(async (file, index) => {
-      console.log('uploadMultipleImgs - Subiendo imagen a Cloudinary: ', file, email, type);
-      const imageUrl = await uploadImg(email, type, file, lastIndex + index + 1); // Pasar el índice como parámetro
-      return imageUrl;
-    });
-
-    return Promise.all(uploadPromises);
-  } catch (error) {
-    console.error('Error al subir las imágenes:', error);
-    throw new Error('Error al subir las imágenes: ' + error.message);
-  }
-}
-
-// updateMultipleImages
-async function updateMultipleImgs(email, type, files) {
-  const user = email.split('@')[0]; // Obtenemos el nombre del usuario
-  console.log('Actualizando múltiples imágenes en Cloudinary: ', files, email, type);
-  const updatePromises = files.map(async (file, index) => {
-    const publicId = file.split('/').pop().split('.')[0]; // Extraer el publicId de la URL
-    const newTags = [user, type, `index_${index + 1}`]; // Crear los nuevos tags
-    console.log(" aqui los tags", newTags);
-
-    return new Promise((resolve, reject) => {
-      // Primero, eliminamos todos los tags existentes
-      cloudinary.uploader.remove_all_tags(publicId, (error, result) => {
-        if (error) {
-          console.error('Error al eliminar los tags de la imagen en Cloudinary:', error);
-          reject(new Error('Error al eliminar los tags de la imagen en Cloudinary: ' + error.message));
-        } else {
-          // Luego, agregamos los nuevos tags
-          cloudinary.uploader.add_tag(newTags.join(','), publicId, (error, result) => {
-            if (error) {
-              console.error('Error al actualizar los tags de la imagen en Cloudinary:', error);
-              reject(new Error('Error al actualizar los tags de la imagen en Cloudinary: ' + error.message));
-            } else {
-              console.log('Tags actualizados con éxito:', result);
-              resolve(result);
-            }
-          });
-        }
-      });
-    });
+  const uploadPromises = files.map(async (file) => {
+    const imageUrl = await uploadImg(email, type, file);
+    return imageUrl;
   });
 
-  return Promise.all(updatePromises);
+  return Promise.all(uploadPromises);
 }
 
-// Función para eliminar una imagen de Cloudinary
+// hagamos la funcion para mutliples imagenes usando
+
+/**
+ * Función para eliminar una imagen de Cloudinary
+ * @param {string} publicId - ID público de la imagen en Cloudinary
+ * @returns {Promise<void>}
+ */
 async function deleteImg(publicId) {
   return new Promise((resolve, reject) => {
     cloudinary.uploader.destroy(publicId, (error, result) => {
@@ -161,9 +120,14 @@ async function deleteImg(publicId) {
   });
 }
 
-// Función para eliminar imágenes de Cloudinary basadas en el correo y el tipo
+/**
+ * Función para eliminar imágenes de Cloudinary basadas en el correo y el tipo
+ * @param {string} email - Correo del restaurante
+ * @param {string} type - Tipo de imagen, ya sea 'profile', 'dish', 'drink', 'restaurant' o '*' para eliminar todas
+ * @returns {Promise<void>}
+ */
 async function deleteImgsByEmailAndType(email, type) {
-  const user = email.split('@')[0]; // Obtenemos el nombre del usuario
+  const user = email.split("@")[0]; // Obtenemos el nombre del usuario
   const tag = user;
 
   return new Promise((resolve, reject) => {
@@ -173,7 +137,7 @@ async function deleteImgsByEmailAndType(email, type) {
       } else {
         const resources = result.resources;
         const publicIdsToDelete = resources
-          .filter(resource => type === '*' || type === 'all' || (resource.tags && resource.tags.includes(type)))
+          .filter(resource => type === '*' || type === 'all' || resource.tags.includes(type))
           .map(resource => resource.public_id);
 
         if (publicIdsToDelete.length === 0) {
@@ -193,7 +157,11 @@ async function deleteImgsByEmailAndType(email, type) {
   });
 }
 
-// Función para eliminar una imagen de Cloudinary usando la URL
+/**
+ * Función para eliminar una imagen de Cloudinary usando la URL
+ * @param {string} url - URL de la imagen en Cloudinary
+ * @returns {Promise<void>}
+ */
 async function deleteImgByUrl(url) {
   if (!isCloudinaryUrl(url)) return url; // Verificar si la URL es de Cloudinary
 
@@ -201,7 +169,14 @@ async function deleteImgByUrl(url) {
   return deleteImg(publicId);
 }
 
-// Función para actualizar una imagen en Cloudinary
+/**
+ * Función para actualizar una imagen en Cloudinary
+ * @param {string} url - URL de la imagen actual en Cloudinary
+ * @param {string} email - Correo del restaurante
+ * @param {string} type - Tipo de imagen, ya sea 'profile', 'dish', 'drink', 'restaurant'
+ * @param {File} file - Archivo de imagen nuevo
+ * @returns {Promise<string>} - URL de la nueva imagen subida
+ */
 async function updateImg(url, email, type, file) {
   const publicId = url.split('/').pop().split('.')[0]; // Extraer el publicId de la URL
 
@@ -209,7 +184,7 @@ async function updateImg(url, email, type, file) {
     const options = {
       public_id: publicId,
       invalidate: true,
-      tags: [email.split('@')[0], type]
+      tags: [email.split("@")[0], type]
     };
 
     // Si el tipo es "profile", añadimos las transformaciones para optimizar y recortar la imagen

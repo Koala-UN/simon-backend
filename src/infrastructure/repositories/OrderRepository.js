@@ -1,7 +1,7 @@
 const pool = require("../../database/connection");
 const OrderRepositoryInterface = require("../../domain/interfaces/order/RepositoryInterface");
 const state = require("../../utils/state");
-const AppError = require('../../domain/exception/AppError')
+const AppError = require("../../domain/exception/AppError");
 /**
  * Clase que interactúa con la base de datos para las operaciones de pedidos.
  */
@@ -22,26 +22,98 @@ class OrderRepository extends OrderRepositoryInterface {
   async findAll(restaurantId) {
     const [rows] = await pool.query(
       `
-            SELECT 
-                p.id, 
-                p.fecha, 
-                p.hora, 
-                p.nombre_cliente,
-                CASE 
-                    WHEN COUNT(pp.pedido_id) = 0 THEN 'PENDIENTE'
-                    WHEN SUM(pp.estado = 'PENDIENTE') > 0 THEN 'PENDIENTE'
-                    ELSE 'ENTREGADO'
-                END AS estado,
-                IFNULL(SUM(pp.total), 0) AS total
-            FROM pedido p
-            LEFT JOIN platillo_has_pedido pp ON p.id = pp.pedido_id
-            JOIN platillo pl ON pp.platillo_id = pl.id
-            WHERE pl.restaurante_id = ?
-            GROUP BY p.id, p.fecha, p.hora, p.nombre_cliente
-        `,
+      SELECT 
+        p.id, 
+        p.fecha, 
+        p.hora, 
+        p.nombre_cliente,
+        CASE 
+          WHEN COUNT(pp.pedido_id) = 0 THEN 'PENDIENTE'
+          WHEN SUM(pp.estado = 'PENDIENTE') > 0 THEN 'PENDIENTE'
+          WHEN SUM(pp.estado = 'CANCELADO') = COUNT(pp.pedido_id) THEN 'CANCELADO'
+          ELSE 'ENTREGADO'
+        END AS estado,
+        IFNULL(SUM(pp.total), 0) AS total,
+        COALESCE(
+          JSON_ARRAYAGG(
+            JSON_OBJECT(
+              'platillo_id', pp.platillo_id,
+              'nombre', pl.nombre,
+              'cantidad', pp.cantidad,
+              'estado', pp.estado,
+              'total', CONCAT('$', FORMAT(pp.total, 0))
+            )
+          ),
+          '[]'
+        ) AS platillos
+      FROM pedido p
+      LEFT JOIN platillo_has_pedido pp ON p.id = pp.pedido_id
+      LEFT JOIN platillo pl ON pp.platillo_id = pl.id
+      WHERE pl.restaurante_id = ?
+      GROUP BY p.id, p.fecha, p.hora, p.nombre_cliente
+      `,
       [restaurantId]
     );
-    return rows;
+
+    // Procesamos los resultados para asegurar un JSON válido
+    return rows.map((row) => ({
+      id: row.id,
+      fecha: row.fecha,
+      hora: row.hora,
+      nombre_cliente: row.nombre_cliente,
+      estado: row.estado,
+      total: `$${row.total.toLocaleString()}`,
+      platillos: JSON.parse(row.platillos).filter(
+        (item) => item !== null && item.platillo_id !== null
+      ),
+    }));
+  }
+
+  async findOrderById(pedidoId) {
+    const [rows] = await pool.query(
+      `
+      SELECT 
+        p.id,
+        p.fecha,
+        p.hora,
+        p.nombre_cliente,
+        COALESCE(
+          JSON_ARRAYAGG(
+            JSON_OBJECT(
+              'platillo_id', pp.platillo_id,
+              'nombre', pl.nombre,
+              'cantidad', pp.cantidad,
+              'estado', pp.estado,
+              'total', CONCAT('$', FORMAT(pp.total, 0))
+            )
+          ),
+          '[]'
+        ) AS platillos,
+        IFNULL(SUM(pp.total), 0) AS total
+      FROM pedido p
+      LEFT JOIN platillo_has_pedido pp ON p.id = pp.pedido_id
+      LEFT JOIN platillo pl ON pp.platillo_id = pl.id
+      WHERE p.id = ?
+      GROUP BY p.id, p.fecha, p.hora, p.nombre_cliente
+      `,
+      [pedidoId]
+    );
+
+    if (!rows.length) {
+      throw new Error(`Pedido con ID ${pedidoId} no encontrado.`);
+    }
+
+    const row = rows[0];
+    return {
+      id: row.id,
+      fecha: row.fecha,
+      hora: row.hora,
+      nombre_cliente: row.nombre_cliente,
+      total: `$${row.total.toLocaleString()}`,
+      platillos: JSON.parse(row.platillos).filter(
+        (item) => item !== null && item.platillo_id !== null
+      ),
+    };
   }
   /**
    * Busca todos los platillos asociados a un pedido específico.
@@ -49,14 +121,53 @@ class OrderRepository extends OrderRepositoryInterface {
    * @returns {Promise<Object[]>} - Lista de platillos asociados al pedido.
    */
   async findOrderById(pedidoId) {
-    const [rows] = await pool.query(
-      `SELECT pp.platillo_id, p.nombre, pp.cantidad, pp.estado, pp.total
-     FROM platillo_has_pedido pp
-     JOIN platillo p ON pp.platillo_id = p.id
-     WHERE pp.pedido_id = ?`,
+    // Primero obtenemos la información básica del pedido
+    const [orderInfo] = await pool.query(
+      `SELECT id, fecha, hora, nombre_cliente
+       FROM pedido 
+       WHERE id = ?`,
       [pedidoId]
     );
-    return rows || []; // Siempre devuelve un array
+
+    if (!orderInfo || orderInfo.length === 0) {
+      throw new Error(`Pedido con ID ${pedidoId} no encontrado.`);
+    }
+
+    // Luego obtenemos los platillos del pedido
+    const [platillos] = await pool.query(
+      `SELECT 
+        pl.nombre,
+        pp.cantidad,
+        pp.estado,
+        pp.total,
+        CONCAT('$', FORMAT(pp.total, 0)) as precio_formateado
+       FROM platillo_has_pedido pp
+       JOIN platillo pl ON pp.platillo_id = pl.id
+       WHERE pp.pedido_id = ?
+       ORDER BY pl.nombre`,
+      [pedidoId]
+    );
+
+    // Formateamos la lista de platillos de manera más legible
+    const platillosFormateados = platillos.map((item) => ({
+      nombre: item.nombre,
+      cantidad: item.cantidad,
+      estado: item.estado,
+      precio: item.precio_formateado,
+    }));
+
+    return {
+      pedido: {
+        id: orderInfo[0].id,
+        fecha: orderInfo[0].fecha,
+        hora: orderInfo[0].hora,
+        cliente: orderInfo[0].nombre_cliente,
+        total: `$${platillos
+          .reduce((sum, item) => sum + parseFloat(item.total), 0)
+          .toLocaleString()}`,
+        items: platillosFormateados,
+      },
+    };
   }
   /**
    * Busca un platillo en un pedido específico.
@@ -197,6 +308,99 @@ class OrderRepository extends OrderRepositoryInterface {
     } catch (error) {
       await connection.rollback();
       throw new AppError(`Error al crear el pedido: ${error.message}`, 500);
+    } finally {
+      connection.release();
+    }
+  }
+  async cancelOrder(pedidoId, platilloId = null) {
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
+
+      // Verificar si el pedido existe
+      const [orderExists] = await connection.query(
+        "SELECT id FROM pedido WHERE id = ?",
+        [pedidoId]
+      );
+
+      if (!orderExists.length) {
+        throw new AppError(`Pedido con ID ${pedidoId} no encontrado.`, 404);
+      }
+
+      // Si se proporciona platilloId, cancelar solo ese platillo
+      if (platilloId) {
+        // Obtener información del platillo antes de cancelarlo
+        const [platilloInfo] = await connection.query(
+          `SELECT cantidad, platillo_id, estado 
+           FROM platillo_has_pedido 
+           WHERE pedido_id = ? AND platillo_id = ?`,
+          [pedidoId, platilloId]
+        );
+
+        if (!platilloInfo.length) {
+          throw new AppError(
+            `Platillo ${platilloId} no encontrado en el pedido ${pedidoId}`,
+            404
+          );
+        }
+
+        if (platilloInfo[0].estado === "CANCELADO") {
+          throw new AppError("Este platillo ya está cancelado", 400);
+        }
+
+        // Actualizar el estado del platillo a CANCELADO
+        await connection.query(
+          `UPDATE platillo_has_pedido 
+           SET estado = 'CANCELADO' 
+           WHERE pedido_id = ? AND platillo_id = ?`,
+          [pedidoId, platilloId]
+        );
+
+        // Devolver las existencias al inventario
+        await connection.query(
+          `UPDATE platillo 
+           SET existencias = existencias + ? 
+           WHERE id = ?`,
+          [platilloInfo[0].cantidad, platilloId]
+        );
+      } else {
+        // Cancelar todo el pedido
+        // Primero obtener todos los platillos del pedido que no estén cancelados
+        const [platillos] = await connection.query(
+          `SELECT cantidad, platillo_id, estado 
+           FROM platillo_has_pedido 
+           WHERE pedido_id = ? AND estado != 'CANCELADO'`,
+          [pedidoId]
+        );
+
+        // Actualizar todos los platillos a CANCELADO
+        await connection.query(
+          `UPDATE platillo_has_pedido 
+           SET estado = 'CANCELADO' 
+           WHERE pedido_id = ?`,
+          [pedidoId]
+        );
+
+        // Devolver las existencias al inventario para cada platillo
+        for (const platillo of platillos) {
+          await connection.query(
+            `UPDATE platillo 
+             SET existencias = existencias + ? 
+             WHERE id = ?`,
+            [platillo.cantidad, platillo.platillo_id]
+          );
+        }
+      }
+
+      await connection.commit();
+      return {
+        message: platilloId
+          ? `Platillo ${platilloId} cancelado exitosamente del pedido ${pedidoId}`
+          : `Pedido ${pedidoId} cancelado exitosamente`,
+      };
+    } catch (error) {
+      await connection.rollback();
+      throw new AppError(error.message, error.statusCode || 500);
     } finally {
       connection.release();
     }
