@@ -191,8 +191,7 @@ class RestaurantController {
       status: "success",
     });
   });
-    });
-  });
+
 
   verifyEmail = asyncHandler(async (req, res) => {
     const { token } = req.query;

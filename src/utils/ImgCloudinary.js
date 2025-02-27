@@ -103,6 +103,39 @@ async function uploadMultipleImgs(email, type, files) {
 
 // hagamos la funcion para mutliples imagenes usando
 
+// updateMultipleImages
+async function updateMultipleImgs(email, type, files) {
+  const user = email.split('@')[0]; // Obtenemos el nombre del usuario
+  console.log('Actualizando múltiples imágenes en Cloudinary: ', files, email, type);
+  const updatePromises = files.map(async (file, index) => {
+    const publicId = file.split('/').pop().split('.')[0]; // Extraer el publicId de la URL
+    const newTags = [user, type, `index_${index + 1}`]; // Crear los nuevos tags
+    console.log(" aqui los tags", newTags);
+
+    return new Promise((resolve, reject) => {
+      // Primero, eliminamos todos los tags existentes
+      cloudinary.uploader.remove_all_tags(publicId, (error, result) => {
+        if (error) {
+          console.error('Error al eliminar los tags de la imagen en Cloudinary:', error);
+          reject(new Error('Error al eliminar los tags de la imagen en Cloudinary: ' + error.message));
+        } else {
+          // Luego, agregamos los nuevos tags
+          cloudinary.uploader.add_tag(newTags.join(','), publicId, (error, result) => {
+            if (error) {
+              console.error('Error al actualizar los tags de la imagen en Cloudinary:', error);
+              reject(new Error('Error al actualizar los tags de la imagen en Cloudinary: ' + error.message));
+            } else {
+              console.log('Tags actualizados con éxito:', result);
+              resolve(result);
+            }
+          });
+        }
+      });
+    });
+  });
+
+  return Promise.all(updatePromises);
+}
 /**
  * Función para eliminar una imagen de Cloudinary
  * @param {string} publicId - ID público de la imagen en Cloudinary
