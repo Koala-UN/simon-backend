@@ -18,13 +18,7 @@ const allowedOrigins = [
 ];
 
 const corsOptions = {
-  origin: (origin, callback) => {
-    if (allowedOrigins.includes(origin) || !origin) {
-      callback(null, true);
-    } else {
-      callback(new Error('No permitido por CORS -> Seguridad de la API de Simon'));
-    }
-  },
+  origin: true, // Permitir todos los orígenes
   credentials: true, // Permite el envío de cookies
 };
 
