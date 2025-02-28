@@ -78,56 +78,70 @@ class ReservationRepository extends ReservationRepositoryInterface {
    * @returns {Promise<{ reservation: Reservation, summary: Object }>}
    */
   async create(reservationData) {
-    // Verifica la capacidad para la hora específica de la nueva reserva
-    const summaryBefore = await this.getReservationSummary(
-      reservationData.restauranteId,
-      reservationData.hora,
-      reservationData.fecha
-    );
-    // En tu método create, realiza la conversión:
-    const totalReservas = parseInt(summaryBefore.total_reservas, 10);
-    const nuevaCantidad = parseInt(reservationData.cantidad, 10);
-    const totalProyectado = totalReservas + nuevaCantidad;
-    if (totalProyectado > summaryBefore.capacidad_reservas) {
-      throw new AppError(
-        `No se puede crear la reserva. Se excede la capacidad del restaurante (Capacidad: ` +
-          `${summaryBefore.capacidad_reservas}, Reservando: ${totalProyectado}).`,
-        400
+    const connection = await db.getConnection(); // Obtener una conexión del pool
+    try {
+      await connection.beginTransaction(); // Iniciar transacción
+
+      // Verifica la capacidad para la hora específica de la nueva reserva
+      const summaryBefore = await this.getReservationSummary(
+        reservationData.restauranteId,
+        reservationData.hora,
+        reservationData.fecha,
+        connection // Pasar la conexión para reutilizarla
       );
+
+      const totalReservas = parseInt(summaryBefore.total_reservas, 10);
+      const nuevaCantidad = parseInt(reservationData.cantidad, 10);
+      const totalProyectado = totalReservas + nuevaCantidad;
+      if (totalProyectado > summaryBefore.capacidad_reservas) {
+        throw new AppError(
+          `No se puede crear la reserva. Se excede la capacidad del restaurante (Capacidad: ` +
+            `${summaryBefore.capacidad_reservas}, Reservando: ${totalProyectado}).`,
+          400
+        );
+      }
+
+      const query = `
+        INSERT INTO reservas (fecha, hora, cantidad, estado, restaurante_id, nombre, telefono, correo, cedula)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+      `;
+      const [result] = await connection.execute(query, [
+        reservationData.fecha,
+        reservationData.hora,
+        reservationData.cantidad,
+        reservationData.estado || state.Reservas.RESERVADO,
+        reservationData.restauranteId,
+        reservationData.nombre,
+        reservationData.telefono,
+        reservationData.correo,
+        reservationData.cedula,
+      ]);
+
+      const newReservation = new Reservation({
+        id: result.insertId,
+        ...reservationData,
+      });
+
+      // Obtiene el resumen actualizado después de la inserción
+      const summaryAfter = await this.getReservationSummary(
+        reservationData.restauranteId,
+        reservationData.hora,
+        reservationData.fecha,
+        connection // Reutilizar la misma conexión
+      );
+
+      await connection.commit(); // Confirmar la transacción
+
+      return {
+        reservation: newReservation,
+        summary: summaryAfter,
+      };
+    } catch (error) {
+      await connection.rollback(); // Revertir si hay error
+      throw error;
+    } finally {
+      connection.release(); // Liberar la conexión al pool
     }
-
-    const query = `
-    INSERT INTO reservas (fecha, hora, cantidad, estado, restaurante_id, nombre, telefono, correo, cedula)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
-  `;
-    const [result] = await db.execute(query, [
-      reservationData.fecha,
-      reservationData.hora,
-      reservationData.cantidad,
-      reservationData.estado || state.Reservas.RESERVADO,
-      reservationData.restauranteId,
-      reservationData.nombre,
-      reservationData.telefono,
-      reservationData.correo,
-      reservationData.cedula,
-    ]);
-
-    const newReservation = new Reservation({
-      id: result.insertId,
-      ...reservationData,
-    });
-
-    // Obtiene el resumen actualizado después de la inserción
-    const summaryAfter = await this.getReservationSummary(
-      reservationData.restauranteId,
-      reservationData.hora,
-      reservationData.fecha
-    );
-
-    return {
-      reservation: newReservation,
-      summary: summaryAfter,
-    };
   }
   /**
    * Asocia una mesa a una reserva.
