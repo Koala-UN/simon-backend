@@ -2,6 +2,7 @@ const state = require("../../utils/state");
 const Address = require("./AddressModel");
 const category = require("../../utils/cagetory");
 const Suscription = require("./SuscriptionModel");
+const {convertToHttps} = require("../../utils/ImgCloudinary");
 class Restaurant {
   constructor(data = {}) {
     this.id = data.id || null;
@@ -15,6 +16,7 @@ class Restaurant {
     this.address = data.address ? new Address(data.address) : null;
     this.categoria = data.categoria || null;
     this.descripcion = data.descripcion || null;
+    this.imageUrl = data.imageUrl? convertToHttps(data.imageUrl) : data.imageUrl;
     this.imageUrl = data.imageUrl || null;
     this.suscripcion = data.suscripcion || null;
     this.validateCategory();
@@ -49,7 +51,7 @@ class Restaurant {
       descripcion: row.descripcion,
       address: row.address ? Address.fromDB(row.address) : null,
       suscripcion: row.suscripcion ? Suscription.fromDB(row.suscripcion) : null,
-      imageUrl: row.imageUrl,
+      imageUrl: row.imageUrl ? convertToHttps(row.imageUrl) : row.imageUrl,
     });
   }
 

@@ -40,4 +40,17 @@ router.put(
   OrderController.updatePlatilloStatus
 );
 
+/**
+ * Ruta para cancelar un pedido completo
+ * PATCH /:pedidoId/cancel
+ */
+router.patch("/:pedidoId/cancel", OrderController.cancelOrder);
+
+/**
+ * Ruta para cancelar un platillo específico de un pedido
+ * PATCH /:pedidoId/platillo/:platilloId/cancel
+ */
+router.patch("/:pedidoId/platillo/:platilloId/cancel", OrderController.cancelOrder);
+
+
 module.exports = router;

@@ -13,3 +13,4 @@ logs/
 # Archivos temporales
 *.tmp
 coverage/
+.vercel

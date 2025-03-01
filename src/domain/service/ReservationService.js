@@ -3,6 +3,8 @@ const NotFoundError = require("../exception/NotFoundError");
 const ReservationServiceInterface = require("../interfaces/reservation/ServiceInterface");
 const state = require("../../utils/state"); // Importar el enum de estados
 const AppError = require("../exception/AppError");
+const emailService = require("./emailService"); 
+const restaurantService = require("./RestaurantService");
 class ReservationService extends ReservationServiceInterface {
   /**
    * Lista todas las reservas.
@@ -62,7 +64,7 @@ class ReservationService extends ReservationServiceInterface {
     }
   }
   /**
-   * Crea una nueva reserva.
+   * Crea una nueva reserva y envía notificación por correo.
    * @param {Object} reservationData - Datos de la reserva.
    * @returns {Promise<Reservation>} La reserva creada.
    */
@@ -75,12 +77,26 @@ class ReservationService extends ReservationServiceInterface {
       const newReservation = await reservationRepository.create(
         reservationData
       );
-      return newReservation.reservation;
+      const reservation = newReservation.reservation;
+      const restaurant = await restaurantService.getRestaurantById(
+        reservationData.restauranteId)
+      // Enviar correo de confirmación
+      await emailService.sendReservationConfirmation({
+        nombre: reservationData.nombre,
+        correo: reservationData.correo,
+        telefono: reservationData.telefono,
+        cedula: reservationData.cedula,
+        restauranteId: reservationData.restauranteId,
+        fecha: reservationData.fecha,
+        hora: reservationData.hora,
+        cantidad: reservationData.cantidad,
+      },restaurant); 
+
+      return { reservation, restaurante: restaurant.nombre };
     } catch (error) {
       throw new AppError(`Error al crear la reserva: ${error.message}`, 500);
     }
   }
-
   /**
    * Valida los datos de la reserva.
    * @param {Object} reservationData - Datos de la reserva.
