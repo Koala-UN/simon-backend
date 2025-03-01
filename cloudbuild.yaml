@@ -1,0 +1,5 @@
+steps:
+- name: 'gcr.io/buildpacks/builder:latest'
+  args: ['build', '--verbose', '.']
+images:
+- 'gcr.io/my-project/my-image:latest'

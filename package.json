@@ -9,9 +9,9 @@
     "dev": "nodemon src/index.js",
     "vercel-build": "echo 'vercel-build por aqui!! '"
   },
-"engines": {
-  "node": "22.x.x"
-},
+  "engines": {
+    "node": "22.12.0"
+  },
   "author": "Brosgor",
   "license": "ISC",
   "dependencies": {
