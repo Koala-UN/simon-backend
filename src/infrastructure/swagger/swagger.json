@@ -791,6 +791,7 @@
         }
       }
     },
+    
     "/payment": {
       "get": {
         "summary": "Ruta de prueba de Mercado Pago",
