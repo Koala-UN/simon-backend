@@ -2,7 +2,8 @@ const express = require("express");
 const routes = require("./infrastructure/routes/routes");
 const errorHandler = require("./infrastructure/middleware/errorHandler");
 const notFoundHandler = require("./infrastructure/middleware/notFounHandler");
-
+const swaggerUi = require("swagger-ui-express");
+const swaggerDocument = require("./infrastructure/swagger/swagger.json");
 // const authMiddleware = require("./infrastructure/middleware/authMiddleware");
 
 const app = express();
@@ -28,6 +29,10 @@ app.use(cookieParser()); // Usar cookie-parser antes de cualquier middleware que
 app.use(express.json()); // Agregar este middleware para parsear JSON
 app.use(express.urlencoded({ extended: true })); // Agregar este middleware para parsear datos de formularios
 app.use(passport.initialize());
+
+// Configura Swagger
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
 
 // Usar las rutas centralizadas
 app.use("/api", routes);
