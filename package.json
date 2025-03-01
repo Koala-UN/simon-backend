@@ -10,7 +10,7 @@
     "vercel-build": "echo 'vercel-build por aqui!! '"
   },
   "engines": {
-    "node": "v22.12.0"
+    "node": "22.12.0"
   },
   "author": "Brosgor",
   "license": "ISC",
