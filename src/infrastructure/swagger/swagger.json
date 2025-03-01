@@ -1,0 +1,833 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "version": "1.0.0",
+    "title": "Simon Backend API",
+    "description": "Documentación de la API de Simon Backend"
+  },
+  "host": "localhost:5000",
+  "basePath": "/api",
+  "schemes": ["http"],
+  "paths": {
+    "/countries": {
+      "get": {
+        "summary": "Obtiene todos los países",
+        "responses": {
+          "200": {
+            "description": "Lista de países"
+          }
+        }
+      },
+      "post": {
+        "summary": "Crea un nuevo país",
+        "responses": {
+          "201": {
+            "description": "País creado"
+          }
+        }
+      }
+    },
+    "/hello": {
+      "get": {
+        "summary": "Responde con 'Hola Mundo'",
+        "responses": {
+          "200": {
+            "description": "Mensaje de saludo"
+          }
+        }
+      }
+    },
+    "/hello/error": {
+      "get": {
+        "summary": "Simula un error de parámetros",
+        "parameters": [
+          {
+            "name": "param",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "description": "Parámetro requerido"
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Parámetro faltante"
+          },
+          "200": {
+            "description": "Parámetro recibido"
+          }
+        }
+      }
+    },
+    "/order": {
+      "get": {
+        "summary": "Obtiene todos los pedidos",
+        "responses": {
+          "200": {
+            "description": "Lista de pedidos"
+          }
+        }
+      },
+      "post": {
+        "summary": "Crea un nuevo pedido",
+        "responses": {
+          "201": {
+            "description": "Pedido creado"
+          }
+        }
+      }
+    },
+    "/order/{id}": {
+      "get": {
+        "summary": "Obtiene un pedido específico",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "ID del pedido"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detalles del pedido"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Actualiza el estado de un pedido",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "ID del pedido"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Estado del pedido actualizado"
+          }
+        }
+      }
+    },
+    "/order/{pedidoId}/platillo/{platilloId}": {
+      "put": {
+        "summary": "Actualiza el estado de un platillo en un pedido",
+        "parameters": [
+          {
+            "name": "pedidoId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "ID del pedido"
+          },
+          {
+            "name": "platilloId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "ID del platillo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Estado del platillo actualizado"
+          }
+        }
+      }
+    },
+    "/order/{pedidoId}/cancel": {
+      "patch": {
+        "summary": "Cancela un pedido completo",
+        "parameters": [
+          {
+            "name": "pedidoId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "ID del pedido"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pedido cancelado"
+          }
+        }
+      }
+    },
+    "/order/{pedidoId}/platillo/{platilloId}/cancel": {
+      "patch": {
+        "summary": "Cancela un platillo específico de un pedido",
+        "parameters": [
+          {
+            "name": "pedidoId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "ID del pedido"
+          },
+          {
+            "name": "platilloId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "ID del platillo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Platillo cancelado"
+          }
+        }
+      }
+    },
+    "/reserve": {
+      "get": {
+        "summary": "Obtiene todas las reservas",
+        "responses": {
+          "200": {
+            "description": "Lista de reservas"
+          }
+        }
+      },
+      "post": {
+        "summary": "Crea una nueva reserva",
+        "responses": {
+          "201": {
+            "description": "Reserva creada"
+          }
+        }
+      }
+    },
+    "/reserve/{reservationId}/table/{tableId}": {
+      "post": {
+        "summary": "Asigna una mesa a una reserva",
+        "parameters": [
+          {
+            "name": "reservationId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "ID de la reserva"
+          },
+          {
+            "name": "tableId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "ID de la mesa"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Mesa asignada a la reserva"
+          }
+        }
+      }
+    },
+    "/reserve/{reservationId}/cancel": {
+      "post": {
+        "summary": "Cancela una reserva",
+        "parameters": [
+          {
+            "name": "reservationId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "ID de la reserva"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reserva cancelada"
+          }
+        }
+      }
+    },
+    "/reserve/restaurant/{restauranteId}": {
+      "get": {
+        "summary": "Obtiene todas las reservas de un restaurante específico",
+        "parameters": [
+          {
+            "name": "restauranteId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "ID del restaurante"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de reservas del restaurante"
+          }
+        }
+      }
+    },
+    "/reserve/capacity/{restaurantId}": {
+      "post": {
+        "summary": "Obtiene la capacidad de un restaurante",
+        "parameters": [
+          {
+            "name": "restaurantId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "ID del restaurante"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Capacidad del restaurante"
+          }
+        }
+      }
+    },
+    "/dish": {
+      "post": {
+        "summary": "Crea un nuevo platillo",
+        "responses": {
+          "201": {
+            "description": "Platillo creado"
+          }
+        }
+      }
+    },
+    "/dish/{dishId}": {
+      "delete": {
+        "summary": "Elimina un platillo",
+        "parameters": [
+          {
+            "name": "dishId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "ID del platillo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Platillo eliminado"
+          }
+        }
+      },
+      "get": {
+        "summary": "Obtiene un platillo por ID",
+        "parameters": [
+          {
+            "name": "dishId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "ID del platillo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detalles del platillo"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Actualiza un platillo",
+        "parameters": [
+          {
+            "name": "dishId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "ID del platillo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Platillo actualizado"
+          }
+        }
+      }
+    },
+    "/dish/restaurant/{restauranteId}": {
+      "get": {
+        "summary": "Obtiene todos los platillos de un restaurante específico",
+        "parameters": [
+          {
+            "name": "restauranteId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "ID del restaurante"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de platillos del restaurante"
+          }
+        }
+      }
+    },
+    "/restaurant": {
+      "post": {
+        "summary": "Crea un nuevo restaurante",
+        "responses": {
+          "201": {
+            "description": "Restaurante creado"
+          }
+        }
+      },
+      "get": {
+        "summary": "Obtiene todos los restaurantes",
+        "responses": {
+          "200": {
+            "description": "Lista de restaurantes"
+          }
+        }
+      }
+    },
+    "/restaurant/protected": {
+      "get": {
+        "summary": "Ruta protegida",
+        "responses": {
+          "200": {
+            "description": "Ruta protegida"
+          }
+        }
+      }
+    },
+    "/restaurant/auth-status": {
+      "get": {
+        "summary": "Verifica el estado de autenticación",
+        "responses": {
+          "200": {
+            "description": "Estado de autenticación"
+          }
+        }
+      }
+    },
+    "/restaurant/auth/google": {
+      "get": {
+        "summary": "Autenticación con Google",
+        "responses": {
+          "200": {
+            "description": "Redirección a Google"
+          }
+        }
+      }
+    },
+    "/restaurant/auth/google/callback": {
+      "get": {
+        "summary": "Callback de autenticación con Google",
+        "responses": {
+          "200": {
+            "description": "Callback de Google"
+          }
+        }
+      }
+    },
+    "/restaurant/chg-password": {
+      "post": {
+        "summary": "Cambia la contraseña",
+        "responses": {
+          "200": {
+            "description": "Contraseña cambiada"
+          }
+        }
+      }
+    },
+    "/restaurant/has-password": {
+      "post": {
+        "summary": "Verifica si el usuario tiene una contraseña",
+        "responses": {
+          "200": {
+            "description": "Verificación de contraseña"
+          }
+        }
+      }
+    },
+    "/restaurant/verify-email-send": {
+      "post": {
+        "summary": "Envía un correo de verificación",
+        "responses": {
+          "200": {
+            "description": "Correo enviado"
+          }
+        }
+      }
+    },
+    "/restaurant/verify-email": {
+      "get": {
+        "summary": "Verifica el correo electrónico",
+        "responses": {
+          "200": {
+            "description": "Correo verificado"
+          }
+        }
+      }
+    },
+    "/restaurant/rec-password": {
+      "post": {
+        "summary": "Recupera la contraseña",
+        "responses": {
+          "200": {
+            "description": "Contraseña recuperada"
+          }
+        }
+      }
+    },
+    "/restaurant/{restaurantId}/img": {
+      "get": {
+        "summary": "Obtiene las imágenes de un restaurante",
+        "parameters": [
+          {
+            "name": "restaurantId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "ID del restaurante"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de imágenes"
+          }
+        }
+      }
+    },
+    "/restaurant/{restaurantId}/images/{type}": {
+      "patch": {
+        "summary": "Actualiza múltiples imágenes de un restaurante",
+        "parameters": [
+          {
+            "name": "restaurantId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "ID del restaurante"
+          },
+          {
+            "name": "type",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Tipo de imagen"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Imágenes actualizadas"
+          }
+        }
+      },
+      "post": {
+        "summary": "Sube múltiples imágenes a un restaurante",
+        "parameters": [
+          {
+            "name": "restaurantId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "ID del restaurante"
+          },
+          {
+            "name": "type",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Tipo de imagen"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Imágenes subidas"
+          }
+        }
+      }
+    },
+    "/restaurant/{restaurantId}/img/{type}": {
+      "post": {
+        "summary": "Sube una imagen a un restaurante",
+        "parameters": [
+          {
+            "name": "restaurantId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "ID del restaurante"
+          },
+          {
+            "name": "type",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Tipo de imagen"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Imagen subida"
+          }
+        }
+      },
+      "put": {
+        "summary": "Actualiza una imagen de un restaurante",
+        "parameters": [
+          {
+            "name": "restaurantId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "ID del restaurante"
+          },
+          {
+            "name": "imgUrl",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "URL de la imagen"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Imagen actualizada"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Elimina una imagen de un restaurante",
+        "parameters": [
+          {
+            "name": "restaurantId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "ID del restaurante"
+          },
+          {
+            "name": "imgId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "ID de la imagen"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Imagen eliminada"
+          }
+        }
+      }
+    },
+    "/restaurant/{restaurantId}": {
+      "get": {
+        "summary": "Obtiene un restaurante por ID",
+        "parameters": [
+          {
+            "name": "restaurantId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "ID del restaurante"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detalles del restaurante"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Actualiza un restaurante",
+        "parameters": [
+          {
+            "name": "restaurantId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "ID del restaurante"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Restaurante actualizado"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Elimina un restaurante",
+        "parameters": [
+          {
+            "name": "restaurantId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "ID del restaurante"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Restaurante eliminado"
+          }
+        }
+      }
+    },
+    "/restaurant/register": {
+      "post": {
+        "summary": "Registra un nuevo restaurante",
+        "responses": {
+          "201": {
+            "description": "Restaurante registrado"
+          }
+        }
+      }
+    },
+    "/restaurant/login": {
+      "post": {
+        "summary": "Inicia sesión en un restaurante",
+        "responses": {
+          "200": {
+            "description": "Inicio de sesión exitoso"
+          }
+        }
+      }
+    },
+    "/restaurant/logout": {
+      "post": {
+        "summary": "Cierra sesión en un restaurante",
+        "responses": {
+          "200": {
+            "description": "Cierre de sesión exitoso"
+          }
+        }
+      }
+    },
+    "/restaurant/{restaurantId}/suscription": {
+      "patch": {
+        "summary": "Actualiza la suscripción de un restaurante",
+        "parameters": [
+          {
+            "name": "restaurantId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "ID del restaurante"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Suscripción actualizada"
+          }
+        }
+      }
+    },
+    "/table": {
+      "post": {
+        "summary": "Crea una nueva mesa",
+        "responses": {
+          "201": {
+            "description": "Mesa creada"
+          }
+        }
+      },
+      "get": {
+        "summary": "Obtiene todas las mesas",
+        "responses": {
+          "200": {
+            "description": "Lista de mesas"
+          }
+        }
+      }
+    },
+    "/table/{id}": {
+      "patch": {
+        "summary": "Actualiza una mesa",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "ID de la mesa"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Mesa actualizada"
+          }
+        }
+      },
+      "get": {
+        "summary": "Obtiene una mesa por ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "ID de la mesa"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detalles de la mesa"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Elimina una mesa",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "ID de la mesa"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Mesa eliminada"
+          }
+        }
+      }
+    },
+    "/payment": {
+      "get": {
+        "summary": "Ruta de prueba de Mercado Pago",
+        "responses": {
+          "200": {
+            "description": "Mensaje de prueba"
+          }
+        }
+      },
+      "post": {
+        "summary": "Crea una preferencia de pago",
+        "responses": {
+          "200": {
+            "description": "Preferencia creada"
+          }
+        }
+      }
+    },
+    "/payment/create_preference": {
+      "post": {
+        "summary": "Crea una preferencia de pago",
+        "responses": {
+          "200": {
+            "description": "Preferencia creada"
+          }
+        }
+      }
+    },
+    "/payment/webhooks": {
+      "post": {
+        "summary": "Recibe webhooks de Mercado Pago",
+        "responses": {
+          "200": {
+            "description": "Webhook recibido"
+          }
+        }
+      }
+    }
+  }
+}

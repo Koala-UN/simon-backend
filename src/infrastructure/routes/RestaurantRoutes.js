@@ -7,6 +7,11 @@ const { upload } = require('../../utils/ImgCloudinary');
 const jwt = require('jsonwebtoken');
 const config = require('../../config/config');
 
+function verifyToken(token) {
+  jwt.verify(token, config.auth.jwtSecret, (err, decoded) => {
+    return !decoded ? false : true;
+  });
+}
 // Rutas de restaurantes
 router.post('/', restaurantController.createRestaurant);
 
@@ -15,11 +20,6 @@ router.get('/protected', authMiddleware, (req, res) => {
   res.json({ message: 'Esta es una ruta protegida', data: req.user });
 });
 
-function verifyToken(token) {
-  jwt.verify(token, config.auth.jwtSecret, (err, decoded) => {
-    return !decoded ? false : true;
-  });
-}
 
 // Ruta para verificar el estado de autenticación
 router.get('/auth-status', (req, res) => {
