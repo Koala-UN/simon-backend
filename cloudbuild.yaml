@@ -1,6 +1,8 @@
 steps:
 - name: 'gcr.io/buildpacks/builder:google-22'
   args: ['build', '--verbose', '.']
+  env:
+  - 'PORT=80'
 images:
 - 'gcr.io/my-project/my-image:latest'
 options:
