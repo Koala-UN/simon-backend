@@ -80,6 +80,7 @@ class ReservationService extends ReservationServiceInterface {
       const reservation = newReservation.reservation;
       const restaurant = await restaurantService.getRestaurantById(
         reservationData.restauranteId)
+        
       // Enviar correo de confirmación
       await emailService.sendReservationConfirmation({
         nombre: reservationData.nombre,
@@ -160,6 +161,21 @@ class ReservationService extends ReservationServiceInterface {
         reservation.cantidad,
         reservation.restauranteId
       );
+      const restaurant = await restaurantService.getRestaurantById(
+        reservation.restauranteId
+      );
+      await emailService.cancelReservation({
+        nombre: reservation.nombre,
+        correo: reservation.correo,
+        telefono: reservation.telefono,
+        cedula: reservation.cedula,
+        restauranteId: reservation.restauranteId,
+        fecha: reservation.fecha,
+        hora: reservation.hora,
+        cantidad: reservation.cantidad,
+        restaurant:restaurant,
+      }); 
+
     } catch (error) {
       if (error instanceof NotFoundError || error instanceof AppError) {
         throw error;
